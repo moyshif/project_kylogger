@@ -1,3 +1,8 @@
+import json
+import os
+import requests
+from abc import ABC, abstractmethod
+
 class Logger(ABC):
     @abstractmethod
     def Writes_to_file(self, data: dict):
