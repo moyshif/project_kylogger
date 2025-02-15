@@ -29,3 +29,5 @@ class FileWriter(Logger):
 
         with open(self.filename, "w", encoding="utf-8") as file:
             json.dump(existing_data, file, ensure_ascii=False, indent=4)
+            
+        return self.filename
