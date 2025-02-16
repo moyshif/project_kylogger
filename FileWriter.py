@@ -1,6 +1,5 @@
 import json
 import os
-import requests
 from abc import ABC, abstractmethod
 
 class Logger(ABC):
@@ -31,3 +30,6 @@ class FileWriter(Logger):
             json.dump(existing_data, file, ensure_ascii=False, indent=4)
             
         return self.filename
+
+    def Writes_to_network(self, data: dict):
+        pass

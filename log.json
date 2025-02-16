@@ -1,5 +1,47 @@
 {
     "kylloger – kyllog.py": "מקש: backspace, חלון פעיל: 'kylloger – kyllog.py'",
     "חיפוש": "מקש: left windows, חלון פעיל: 'חיפוש'",
-    "kylloger – FileWriter.py": "מקש: left windows, חלון פעיל: 'kylloger – FileWriter.py'"
+    "kylloger – FileWriter.py": "מקש: left windows, חלון פעיל: 'kylloger – FileWriter.py'",
+    "16/02/2025 18:27:53": [
+        {
+            "kylloger – keylogger_manager.py": {
+                "text": "(*cmd*)",
+                "language": "00000409"
+            }
+        },
+        {
+            "חיפוש": {
+                "text": "(*cmd*)",
+                "language": "00000409"
+            }
+        }
+    ],
+    "16/02/2025 18:27:58": [
+        {
+            "kylloger – keylogger_manager.py": {
+                "text": "(*cmd*)",
+                "language": "00000409"
+            }
+        },
+        {
+            "חיפוש": {
+                "text": "(*cmd*)",
+                "language": "00000409"
+            }
+        }
+    ],
+    "16/02/2025 18:28:03": [
+        {
+            "kylloger – keylogger_manager.py": {
+                "text": "(*cmd*)",
+                "language": "00000409"
+            }
+        },
+        {
+            "חיפוש": {
+                "text": "(*cmd*)",
+                "language": "00000409"
+            }
+        }
+    ]
 }

