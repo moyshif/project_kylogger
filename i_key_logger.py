@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 
+
 class IKeyLogger(ABC):
     """
     ממשק מופשט עבור לוגר מקלדת.
     מגדיר את הפעולות הנדרשות לכל יישום של לוגר מקלדת.
     """
+
     @abstractmethod
     def start_logging(self) -> None:
         """מתחיל את תהליך הרישום של לחיצות מקלדת."""
@@ -16,7 +18,7 @@ class IKeyLogger(ABC):
         pass
 
     @abstractmethod
-    def get_logged_keys(self) -> List[Dict[str, Dict[str, str]]]:
+    def get_logged_keys(self):
         """
         מחזיר את רשימת הלחיצות שנרשמו.
 
@@ -25,4 +27,3 @@ class IKeyLogger(ABC):
                                              עבור חלון פעיל, הכולל את הטקסט שנרשם ואת שפת המקלדת.
         """
         pass
-

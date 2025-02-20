@@ -1,4 +1,4 @@
-class encryption:
+class Encryption:
     def __init__(self, key):
         self.key = key
 
@@ -16,11 +16,10 @@ class encryption:
             processed_dict = {}
             for k, v in dictionary.items():
                 if isinstance(v, str):
-                    key_dic = self.xor_encrypt_decrypt(k)    # הצפנת / פיענוח מקור ההקשה
-                    processed_dict[key_dic] = self.xor_encrypt_decrypt(v)  #  הצפנה/פענוח ההקשות
+                    key_dic = self.xor_encrypt_decrypt(k)  # הצפנת / פיענוח מקור ההקשה
+                    processed_dict[key_dic] = self.xor_encrypt_decrypt(v)  # הצפנה/פענוח ההקשות
                 else:
                     processed_dict[k] = v
             processed_list.append(processed_dict)
 
         return {timestamp_key: processed_list}
-
