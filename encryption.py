@@ -23,3 +23,4 @@ class Encryption:
             processed_list.append(processed_dict)
 
         return {timestamp_key: processed_list}
+
