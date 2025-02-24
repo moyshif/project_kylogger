@@ -29,17 +29,21 @@ class Encryption:
         return processed_dict
 
 c = {
-    "24/02/2025 12:03": [
+
+    "24/02/2025 12:57": [
         {
-            "  פלל׭%בעהףלט": "ks^vudf`X"
-        }
-    ],
-    "24/02/2025 12:07": [
-        {
-            "  פלל׭%בעהףלט": "כב^vudf`Xעא׭ב^vudf`Xכב^vudf`Xץ׬כק"
+            "פלל׭%בעהףלט": "כב%ץ׬כ"
         },
         {
-            " Bjjbi`%DL%Vqpalj%(%U|qmjk%DUL%Lkq`wdfqljkv%y%Bjjbi`%DL%Vqpalj ": "כבכב^vudf`Xץ"
+            "‮זאו׭%ץמץפ%-441,%(%h501=107130Ebhdli+fjh%(%Bhdli%(%Bjjbi`%Fmwjh`": "במאי%הפז׭"
+        }
+    ],
+    "24/02/2025 12:58": [
+        {
+            " Bjjbi`%DL%Vqpalj%(%U|qmjk%DUL%Lkq`wdfqljkv%y%Bjjbi`%DL%Vqpalj": "אכב%קם^GDFNVUDF@Xאז"
+        },
+        {
+            "פלל׭%בעהףלט": "םאה"
         }
     ]
 }
