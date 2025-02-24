@@ -1,0 +1,128 @@
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>ייבוא האזנות</title>
+  <style>
+    body {
+      background-color: #0a0a15;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      direction: rtl;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .button {
+      background: transparent;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      transition: all 0.3s;
+      margin: 5px;
+      text-decoration: none;
+    }
+    .button:hover {
+      background: #00ff00;
+      color: #0a0a15;
+      box-shadow: 0 0 10px #00ff00;
+    }
+    #logContainer {
+      background: rgba(0, 20, 0, 0.9);
+      padding: 15px;
+      border: 1px solid #00ff00;
+      margin-top: 20px;
+      min-height: 300px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      border-bottom: 1px dashed #00ff00;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+    }
+    .timestamp {
+      font-weight: bold;
+      color: #00ff00;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>האזנות למחשב ספציפי</h1>
+    <a class="button" href="index.html">חזרה לרשימת מכשירים</a>
+    <div id="logContainer"></div>
+  </div>
+
+  <script>
+    // נקרא את ה-macAddress מה-URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const macAddress = urlParams.get('mac');
+
+    if (!macAddress) {
+      document.getElementById('logContainer').innerHTML = 'לא צוין מכשיר (MAC)';
+    } else {
+      fetchLogs(macAddress);
+    }
+
+    async function fetchLogs(mac) {
+      // מניחים שיש endpoint /logs?mac=... שמחזיר רק את הלוגים של MAC זה
+      const url = `https://your-server.com/logs?mac=${mac}`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('שגיאה בטעינת ההאזנות מהמחשב המבוקש');
+        }
+        const data = await response.json();
+        // data יכול להיות {
+        //   "24/02/2025 12:57": [ { "חלון": "טקסט" }, ... ],
+        //   "24/02/2025 12:58": [ ... ],
+        // }
+        displayLogs(data);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('logContainer').textContent = 'לא ניתן לטעון את ההאזנות למחשב הנבחר';
+      }
+    }
+
+    function displayLogs(logs) {
+      const container = document.getElementById('logContainer');
+      container.innerHTML = '';
+
+      // logs: { timestamp: [ { "window": "text" }, ... ] }
+      for (let timestamp in logs) {
+        if (logs.hasOwnProperty(timestamp)) {
+          const entryArr = logs[timestamp];
+          const tsDiv = document.createElement('div');
+          tsDiv.className = 'log-entry';
+
+          const timeLabel = document.createElement('div');
+          timeLabel.className = 'timestamp';
+          timeLabel.textContent = timestamp;
+          tsDiv.appendChild(timeLabel);
+
+          for (let i = 0; i < entryArr.length; i++) {
+            const item = entryArr[i];
+            for (let windowName in item) {
+              if (item.hasOwnProperty(windowName)) {
+                const windowDiv = document.createElement('div');
+                windowDiv.innerHTML = `<strong>${windowName}:</strong> ${item[windowName]}`;
+                tsDiv.appendChild(windowDiv);
+              }
+            }
+          }
+          container.appendChild(tsDiv);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
