@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CyberControl Command Center</title>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-green: #00ff9d;
+            --dark-bg: #0a0a20;
+            --grid-color: rgba(0, 243, 255, 0.1);
+            --panel-bg: rgba(10, 10, 32, 0.9);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--neon-blue);
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated grid background */
+        .cyber-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            transform-origin: 0 0;
+            animation: gridMove 15s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes gridMove {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: 80px 1fr;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Header section */
+        .header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-blue);
+            border-radius: 10px;
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        .header h1 {
+            color: var(--neon-pink);
+            text-shadow: 0 0 10px var(--neon-pink);
+            font-size: 2em;
+            animation: textGlow 2s infinite alternate;
+        }
+
+        /* Side panels */
+        .side-panel {
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-blue);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        /* Main control panel */
+        .main-panel {
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-pink);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        .button {
+            padding: 12px 25px;
+            cursor: pointer;
+            background: transparent;
+            color: var(--neon-blue);
+            border: 2px solid var(--neon-blue);
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--neon-blue);
+            opacity: 0.3;
+            transition: all 0.3s;
+        }
+
+        .button:hover::before {
+            top: 0;
+        }
+
+        .button.stop {
+            color: var(--neon-pink);
+            border-color: var(--neon-pink);
+        }
+
+        .button.stop::before {
+            background: var(--neon-pink);
+        }
+
+        .status-display {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--neon-green);
+            border-radius: 5px;
+            padding: 15px;
+            font-family: monospace;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: var(--neon-green);
+            animation: scanline 2s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .log-container {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--neon-blue);
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            overflow-y: auto;
+            color: var(--neon-green);
+            position: relative;
+        }
+
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+        }
+
+        /* MAC Address Connection */
+        .mac-connection {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(255, 0, 255, 0.05);
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid var(--neon-pink);
+        }
+
+        .mac-input {
+            flex-grow: 1;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        /* System metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .metric-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--neon-green);
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5em;
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
+        }
+
+        @keyframes textGlow {
+            from { text-shadow: 0 0 5px var(--neon-pink); }
+            to { text-shadow: 0 0 20px var(--neon-pink); }
+        }
+
+        /* Connection indicator */
+        .connection-status {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
+            transition: all 0.3s;
+        }
+
+        .connection-status.connected {
+            background: var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+
+        select, input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-grid"></div>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>CYBERCONTROL COMMAND CENTER</h1>
+            <div class="mac-connection">
+                <div class="connection-status" id="connectionIndicator"></div>
+                <input type="text" id="macAddress" class="mac-input" placeholder="MAC Address: XX:XX:XX:XX:XX:XX">
+                <button class="button" onclick="connectDevice()">CONNECT</button>
+            </div>
+        </header>
+
+        <!-- Left Panel -->
+        <div class="side-panel">
+            <h2>System Controls</h2>
+            <button class="button" onclick="sendCommand('start')">Initialize System</button>
+            <button class="button stop" onclick="sendCommand('stop')">Emergency Stop</button>
+            
+            <h3>Data Routing</h3>
+            <select id="routingSelect" onchange="setRouting(this.value)">
+                <option value="file">Encrypted Storage</option>
+                <option value="server">Secure Transmission</option>
+            </select>
+
+            <h3>Runtime Config</h3>
+            <input type="number" id="minutesInput" placeholder="Duration (minutes)">
+            <button class="button" onclick="setDuration()">Set Runtime</button>
+        </div>
+
+        <!-- Main Panel -->
+        <div class="main-panel">
+            <h2>System Status</h2>
+            <div class="status-display" id="status">
+                System Ready...
+            </div>
+            
+            <h2>Operation Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <div>CPU Load</div>
+                    <div class="metric-value" id="cpuLoad">0%</div>
+                </div>
+                <div class="metric-box">
+                    <div>Memory Usage</div>
+                    <div class="metric-value" id="memoryUsage">0%</div>
+                </div>
+                <div class="metric-box">
+                    <div>Network Speed</div>
+                    <div class="metric-value" id="networkSpeed">0 MB/s</div>
+                </div>
+                <div class="metric-box">
+                    <div>Active Processes</div>
+                    <div class="metric-value" id="processes">0</div>
+                </div>
+            </div>
+
+            <h2>System Logs</h2>
+            <div class="log-container" id="logContainer"></div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="side-panel">
+            <h2>Network Status</h2>
+            <div class="status-display">
+                <div>Connected Devices: <span id="deviceCount">0</span></div>
+                <div>Protocol: <span id="protocol">TCP/IP</span></div>
+                <div>Encryption: <span id="encryption">AES-256</span></div>
+            </div>
+
+            <h2>Active Alerts</h2>
+            <div class="log-container" id="alertContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const SERVER_URL = "https://server.onrender.com";
+        let connectedDevice = null;
+
+        // Initialize system
+        document.addEventListener("DOMContentLoaded", async function() {
+            try {
+                const response = await fetch(`${SERVER_URL}/ping`);
+                const data = await response.text();
+                addToLog("System initialized. Server connection established.");
+                simulateMetrics(); // Start simulating metrics for demo
+            } catch (error) {
+                addToLog("WARNING: Server connection failed!");
+            }
+        });
+
+        function validateMacAddress(mac) {
+            const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+            return macRegex.test(mac);
+        }
+
+        async function connectDevice() {
+            const macInput = document.getElementById('macAddress');
+            const mac = macInput.value;
+            
+            if (!validateMacAddress(mac)) {
+                showStatus("Invalid MAC address format!");
+                addToLog("Connection failed: Invalid MAC format");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SERVER_URL}/connect_device`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mac_address: mac })
+                });
+
+                if (response.ok) {
+                    connectedDevice = mac;
+                    document.getElementById('connectionIndicator').classList.add('connected');
+                    showStatus("Device connected successfully");
+                    addToLog(`Device ${mac} connected to control system`);
+                    document.getElementById('deviceCount').textContent = '1';
+                } else {
+                    throw new Error("Connection failed");
+                }
+            } catch (error) {
+                showStatus("Connection failed: " + error.message);
+                addToLog(`Connection attempt failed for device ${mac}`);
+            }
+        }
+
+        async function sendCommand(action) {
+            if (!connectedDevice) {
+                showStatus("No device connected!");
+                addToLog("Command failed: No active device connection");
+                return;
+            }
+
+            try {
+                await fetch(`${SERVER_URL}/send_command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: action,
+                        device_mac: connectedDevice
+                    })
+                });
+                showStatus(`Command "${action}" executed successfully`);
+                addToLog(`Command executed: ${action}`);
+            } catch (error) {
+                showStatus(`Error: ${error.message}`);
+                addToLog(`Command failed: ${error.message}`);
+            }
+        }
+
+        function showStatus(message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+        }
+
+        function addToLog(message) {
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Simulate changing metrics for demo purposes
+        function simulateMetrics() {
+            setInterval(() => {
+                document.getElementById('cpuLoad').textContent = 
+                    Math.floor(Math.random() * 100) + '%';
+                document.getElementById('memoryUsage').textContent = 
+                    Math.floor(Math.random() * 100) + '%';
+                document.getElementById('networkSpeed').textContent = 
+                    (Math.random() * 10).toFixe

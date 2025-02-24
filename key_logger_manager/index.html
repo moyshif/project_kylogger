@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cyber Control Panel</title>
+    <meta name="description" content="Cyber Control Panel" />
+    <meta name="author" content="Lovable" />
+    <meta property="og:image" content="/og-image.png" />
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="cyber-theme">
+    <div id="app">
+      <header class="cyber-header">
+        <h1 class="glow-text">CYBER CONTROL PANEL</h1>
+        <div class="status-bar">
+          <span class="status-dot"></span>
+          <span class="status-text">SYSTEM ONLINE</span>
+        </div>
+      </header>
+      
+      <main class="cyber-grid">
+        <section class="computer-list">
+          <div class="section-header">
+            <h2 class="neon-text">CONNECTED SYSTEMS</h2>
+            <button class="cyber-button add-btn" id="addComputer">
+              <span class="button-content">+ ADD COMPUTER</span>
+            </button>
+          </div>
+          
+          <div class="search-bar">
+            <input type="text" class="cyber-input" placeholder="Search systems..." id="searchInput">
+          </div>
+          
+          <div class="computer-grid" id="computerGrid"></div>
+        </section>
+      </main>
+      
+      <!-- Add Computer Modal -->
+      <div class="cyber-modal" id="addComputerModal">
+        <div class="modal-content">
+          <h2 class="neon-text">ADD NEW SYSTEM</h2>
+          <form id="addComputerForm">
+            <div class="form-group">
+              <label for="computerName">SYSTEM NAME</label>
+              <input type="text" class="cyber-input" id="computerName" required>
+            </div>
+            <div class="form-group">
+              <label for="macAddress">MAC ADDRESS</label>
+              <input type="text" class="cyber-input" id="macAddress" 
+                     pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$" 
+                     placeholder="00:00:00:00:00:00" required>
+            </div>
+            <div class="modal-actions">
+              <button type="submit" class="cyber-button success">
+                <span class="button-content">INITIALIZE</span>
+              </button>
+              <button type="button" class="cyber-button danger" id="cancelAdd">
+                <span class="button-content">CANCEL</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
