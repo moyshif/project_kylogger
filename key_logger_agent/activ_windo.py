@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import platform
 import subprocess
 import ctypes
+import re
 from ctypes import wintypes
 
 
@@ -50,7 +51,8 @@ class WindowsActiveWindowDetector(ActiveWindowDetectorBase):
         length = 256
         buffer = ctypes.create_unicode_buffer(length)
         self.user32.GetWindowTextW(hwnd, buffer, length)
-        return buffer.value
+        clean_window_name = re.sub(r'[\u200f\u200e\u202c]', '', buffer.value)
+        return clean_window_name
 
 
 class LinuxActiveWindowDetector(ActiveWindowDetectorBase):
