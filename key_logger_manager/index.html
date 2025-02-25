@@ -628,24 +628,24 @@
     const SERVER_URL = 'https://key-logger-server.onrender.com'; // כתובת השרת (לדוגמה)
 
     // נתוני דוגמה (מכשירים) למקרה בו אחזור מהשרת נכשל
-    const mockDevices = [
-      {
-        macAddress: "00:11:22:33:44:55",
-        name: "מחשב נייד של דני",
-        connected: true,
-        timeLimit: 180,
-        storageLocation: "server",
-        lastSeen: "2024-02-23 10:30"
-      },
-      {
-        macAddress: "66:77:88:99:AA:BB",
-        name: "טאבלט משפחתי",
-        connected: false,
-        timeLimit: null,
-        storageLocation: "file",
-        lastSeen: "2024-02-22 15:45"
-      }
-    ];
+    // const mockDevices = [
+    //   {
+    //     macAddress: "00:11:22:33:44:55",
+    //     name: "מחשב נייד של דני",
+    //     connected: true,
+    //     timeLimit: 180,
+    //     storageLocation: "server",
+    //     lastSeen: "2024-02-23 10:30"
+    //   },
+    //   {
+    //     macAddress: "66:77:88:99:AA:BB",
+    //     name: "טאבלט משפחתי",
+    //     connected: false,
+    //     timeLimit: null,
+    //     storageLocation: "file",
+    //     lastSeen: "2024-02-22 15:45"
+    //   }
+    // ];
 
     let currentMac = null;
 
@@ -653,7 +653,7 @@
     async function fetchDevices() {
       document.getElementById('loadingMessage').style.display = 'block';
       try {
-        const response = await fetch(`${SERVER_URL}/devices`);
+        const response = await fetch(`${SERVER_URL}/api/status/all`);
         if (!response.ok) {
           throw new Error(`Error fetching devices: ${response.status}`);
         }
@@ -797,7 +797,7 @@
       let oldName = device.name || "";
       let oldTimeLimit = device.timeLimit || null;
       let oldStorageLocation = device.storageLocation || "";
-      let oldSaveFrequency = device.saveFrequency || 5; 
+      let oldSaveFrequency = device.saveFrequency || 5;
       // (אם לא הגדרנו קודם saveFrequency במכשיר, נניח 5 כערך בסיסי)
 
       // נשתמש במערך שדות כדי לבצע השוואה ב־for
@@ -839,7 +839,7 @@
 
       // שלב 5: שליחת השינויים בלבד לשרת
       try {
-        const response = await fetch(`${SERVER_URL}/change`, {
+        const response = await fetch(`${SERVER_URL}/api/status/change`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

