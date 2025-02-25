@@ -52,16 +52,12 @@ class StatusChecker(APIServer):
     שולח בקשת GET כדי לדעת האם יש שינויים בסטטוסים.
     """
     def interact_with_server(self):
-        """
-        שולח בקשת GET לבדיקת שינויים בסטטוסים.
-
-        :return: תגובת השרת (requests.Response).
-        """
-        url = "http://your_api_server/check_status_changes"  # החלף בכתובת ה-URL האמיתית
+        url = "http://127.0.0.1:5000/api/status/check"  # החלף בכתובת ה-URL האמיתית
         try:
-            response = requests.get(url)
+            response = requests.get(url,headers = {"mac_address":mac_address})
             response.raise_for_status()
-            return response
+            return response.json()  # מחזיר את המילון שהתקבל מהשרת
+
         except requests.exceptions.RequestException as e:
             print(f"שגיאה בבדיקת שינויי סטטוס: {e}")
             return None
