@@ -33,4 +33,4 @@ class FileWriter(Logger):
         return self.filename
 
     def Writes_to_network(self, data: dict):
-        pass
+        RequestManager().handle_request('POST', "data", data)
