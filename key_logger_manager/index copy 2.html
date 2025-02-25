@@ -1,442 +1,645 @@
 <!DOCTYPE html>
-<html>
+<html lang="he" dir="rtl">
+
 <head>
-    <title>CyberControl Command Center</title>
-    <style>
-        :root {
-            --neon-blue: #00f3ff;
-            --neon-pink: #ff00ff;
-            --neon-green: #00ff9d;
-            --dark-bg: #0a0a20;
-            --grid-color: rgba(0, 243, 255, 0.1);
-            --panel-bg: rgba(10, 10, 32, 0.9);
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matrix Device Manager</title>
+  <style>
+    :root {
+      --neon-purple: #9b59b6;
+      --neon-green: #27ae60;
+      --neon-blue: #3498db;
+      --dark-bg: #1a1a2e;
+      --panel-bg: rgba(26, 26, 46, 0.9);
+      --glow: 0 0 15px var(--neon-purple), 0 0 30px rgba(155, 89, 182, 0.5);
+      --grid-color: rgba(255, 255, 255, 0.05);
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    body {
+      background: var(--dark-bg);
+      color: var(--neon-green);
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      direction: rtl;
+      position: relative;
+      overflow: hidden;
+    }
 
-        body {
-            background-color: var(--dark-bg);
-            color: var(--neon-blue);
-            font-family: 'Courier New', monospace;
-            min-height: 100vh;
-            overflow: hidden;
-            position: relative;
-        }
+    /* Grid Background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml,<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="50" x2="50" y2="0" stroke="%23ffffff" stroke-opacity="0.05" stroke-width="1"/><line x1="50" y1="0" x2="0" y2="50" stroke="%23ffffff" stroke-opacity="0.05" stroke-width="1"/></svg>');
+      z-index: -2;
+      opacity: 0.3;
+    }
 
-        /* Animated grid background */
-        .cyber-grid {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 200%;
-            height: 200%;
-            background: 
-                linear-gradient(var(--grid-color) 1px, transparent 1px),
-                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-            background-size: 40px 40px;
-            transform-origin: 0 0;
-            animation: gridMove 15s linear infinite;
-            z-index: 0;
-        }
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
 
-        @keyframes gridMove {
-            0% {
-                transform: translate(-50%, -50%) rotate(0deg);
-            }
-            100% {
-                transform: translate(-50%, -50%) rotate(360deg);
-            }
-        }
+    h1 {
+      text-align: center;
+      color: var(--neon-purple);
+      text-shadow: var(--glow);
+      font-size: 2.5em;
+      margin-bottom: 40px;
+      animation: neonFlicker 2s infinite alternate;
+    }
 
-        .container {
-            display: grid;
-            grid-template-columns: 300px 1fr 300px;
-            grid-template-rows: 80px 1fr;
-            height: 100vh;
-            position: relative;
-            z-index: 1;
-            padding: 20px;
-            gap: 20px;
-        }
+    @keyframes neonFlicker {
+      0% { text-shadow: var(--glow); }
+      50% { text-shadow: 0 0 10px var(--neon-purple), 0 0 20px rgba(155, 89, 182, 0.7); }
+      100% { text-shadow: var(--glow); }
+    }
 
-        /* Header section */
-        .header {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            background: var(--panel-bg);
-            border: 2px solid var(--neon-blue);
-            border-radius: 10px;
-            box-shadow: 0 0 20px var(--neon-blue);
-        }
+    /* Device Grid */
+    .devices-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
 
-        .header h1 {
-            color: var(--neon-pink);
-            text-shadow: 0 0 10px var(--neon-pink);
-            font-size: 2em;
-            animation: textGlow 2s infinite alternate;
-        }
+    .device-card {
+      background: var(--panel-bg);
+      border: 2px solid var(--neon-green);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 20px var(--neon-green), 0 0 40px rgba(39, 174, 96, 0.3);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
 
-        /* Side panels */
-        .side-panel {
-            background: var(--panel-bg);
-            border: 2px solid var(--neon-blue);
-            border-radius: 10px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            box-shadow: 0 0 15px var(--neon-blue);
-        }
+    .device-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(39, 174, 96, 0.1), transparent);
+      animation: glowPulse 5s infinite;
+      z-index: -1;
+    }
 
-        /* Main control panel */
-        .main-panel {
-            background: var(--panel-bg);
-            border: 2px solid var(--neon-pink);
-            border-radius: 10px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            box-shadow: 0 0 20px var(--neon-pink);
-        }
+    @keyframes glowPulse {
+      0% { opacity: 0.2; }
+      50% { opacity: 0.5; }
+      100% { opacity: 0.2; }
+    }
 
-        .button {
-            padding: 12px 25px;
-            cursor: pointer;
-            background: transparent;
-            color: var(--neon-blue);
-            border: 2px solid var(--neon-blue);
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 1.1em;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
+    .device-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 25px var(--neon-green), 0 0 50px rgba(39, 174, 96, 0.5);
+    }
 
-        .button::before {
-            content: '';
-            position: absolute;
-            top: -100%;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--neon-blue);
-            opacity: 0.3;
-            transition: all 0.3s;
-        }
+    .device-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
 
-        .button:hover::before {
-            top: 0;
-        }
+    .device-name {
+      font-size: 1.4em;
+      font-weight: bold;
+      color: var(--neon-blue);
+      text-shadow: 0 0 5px var(--neon-blue);
+    }
 
-        .button.stop {
-            color: var(--neon-pink);
-            border-color: var(--neon-pink);
-        }
+    .status-indicator {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 10px;
+      animation: pulseStatus 1.5s infinite;
+    }
 
-        .button.stop::before {
-            background: var(--neon-pink);
-        }
+    .status-connected {
+      background: var(--neon-green);
+      box-shadow: 0 0 10px var(--neon-green);
+    }
 
-        .status-display {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--neon-green);
-            border-radius: 5px;
-            padding: 15px;
-            font-family: monospace;
-            position: relative;
-            overflow: hidden;
-        }
+    .status-disconnected {
+      background: var(--neon-red);
+      box-shadow: 0 0 10px var(--neon-red);
+    }
 
-        .status-display::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background: var(--neon-green);
-            animation: scanline 2s linear infinite;
-        }
+    @keyframes pulseStatus {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
 
-        @keyframes scanline {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
+    .device-info {
+      margin-bottom: 20px;
+      font-size: 0.95em;
+      line-height: 1.6;
+      color: var(--neon-green);
+    }
 
-        .log-container {
-            flex-grow: 1;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid var(--neon-blue);
-            border-radius: 5px;
-            padding: 10px;
-            font-family: monospace;
-            overflow-y: auto;
-            color: var(--neon-green);
-            position: relative;
-        }
+    .button {
+      background: transparent;
+      border: 2px solid var(--neon-green);
+      color: var(--neon-green);
+      padding: 10px 20px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      margin: 5px 0;
+    }
 
-        .log-entry {
-            padding: 5px;
-            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
-        }
+    .button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(39, 174, 96, 0.2);
+      transition: all 0.4s ease;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: -1;
+    }
 
-        /* MAC Address Connection */
-        .mac-connection {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            background: rgba(255, 0, 255, 0.05);
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid var(--neon-pink);
-        }
+    .button:hover::after {
+      width: 300%;
+      height: 300%;
+    }
 
-        .mac-input {
-            flex-grow: 1;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--neon-blue);
-            color: var(--neon-blue);
-            border-radius: 4px;
-            font-family: monospace;
-        }
+    .button:hover {
+      color: var(--dark-bg);
+      box-shadow: 0 0 20px var(--neon-green);
+    }
 
-        /* System metrics */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+    }
 
-        .metric-box {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--neon-green);
-            border-radius: 5px;
-            padding: 10px;
-            text-align: center;
-        }
+    .modal-content {
+      background: var(--panel-bg);
+      border: 2px solid var(--neon-green);
+      box-shadow: 0 0 20px var(--neon-green), 0 0 40px rgba(39, 174, 96, 0.3);
+      max-width: 550px;
+      margin: 60px auto;
+      padding: 25px;
+      position: relative;
+      border-radius: 12px;
+      animation: modalPop 0.5s ease-out;
+    }
 
-        .metric-value {
-            font-size: 1.5em;
-            color: var(--neon-green);
-            text-shadow: 0 0 5px var(--neon-green);
-        }
+    @keyframes modalPop {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
 
-        @keyframes textGlow {
-            from { text-shadow: 0 0 5px var(--neon-pink); }
-            to { text-shadow: 0 0 20px var(--neon-pink); }
-        }
+    .close-modal {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      cursor: pointer;
+      color: var(--neon-purple);
+      font-size: 1.5em;
+      transition: color 0.3s;
+    }
 
-        /* Connection indicator */
-        .connection-status {
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            background: #ff0000;
-            box-shadow: 0 0 10px #ff0000;
-            transition: all 0.3s;
-        }
+    .close-modal:hover {
+      color: var(--neon-red);
+    }
 
-        .connection-status.connected {
-            background: var(--neon-green);
-            box-shadow: 0 0 10px var(--neon-green);
-        }
+    input,
+    select {
+      background: rgba(26, 26, 46, 0.95);
+      border: 2px solid var(--neon-green);
+      color: var(--neon-green);
+      padding: 10px;
+      margin: 8px 0;
+      width: 100%;
+      font-family: 'Courier New', monospace;
+      box-shadow: inset 0 0 8px var(--neon-green);
+      transition: border-color 0.3s;
+    }
 
-        select, input {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--neon-blue);
-            color: var(--neon-blue);
-            padding: 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            width: 100%;
-        }
-    </style>
+    input:focus,
+    select:focus {
+      border-color: var(--neon-blue);
+      outline: none;
+      box-shadow: inset 0 0 12px var(--neon-blue);
+    }
+
+    .settings-group {
+      margin-bottom: 20px;
+    }
+
+    .settings-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--neon-blue);
+      text-shadow: 0 0 5px var(--neon-blue);
+    }
+
+    /* Lock Screen */
+    .lock-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--dark-bg), #2d2d44);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .lock-screen.active {
+      display: flex;
+      animation: glitch 0.3s linear infinite;
+    }
+
+    .lock-content {
+      text-align: center;
+      position: relative;
+    }
+
+    .lock-icon {
+      font-size: 6em;
+      color: var(--neon-purple);
+      margin-bottom: 25px;
+      animation: neonPulse 1.5s infinite alternate;
+      text-shadow: var(--glow);
+    }
+
+    @keyframes neonPulse {
+      0% { text-shadow: var(--glow); }
+      50% { text-shadow: 0 0 20px var(--neon-purple), 0 0 40px rgba(155, 89, 182, 0.8); }
+      100% { text-shadow: var(--glow); }
+    }
+
+    .unlock-form {
+      background: var(--panel-bg);
+      padding: 40px;
+      border: 3px solid var(--neon-green);
+      box-shadow: 0 0 25px var(--neon-green), 0 0 50px rgba(39, 174, 96, 0.5);
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .unlock-form::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -150%;
+      width: 300%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(39, 174, 96, 0.3), transparent);
+      animation: scanWave 3s linear infinite;
+    }
+
+    @keyframes scanWave {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .password-input {
+      background: rgba(26, 26, 46, 0.95);
+      border: 2px solid var(--neon-green);
+      color: var(--neon-green);
+      padding: 15px;
+      margin: 15px 0;
+      width: 280px;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      box-shadow: inset 0 0 10px var(--neon-green);
+    }
+
+    .unlock-button {
+      background: transparent;
+      border: 2px solid var(--neon-green);
+      color: var(--neon-green);
+      padding: 15px 40px;
+      margin-top: 20px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .unlock-button:hover {
+      background: var(--neon-green);
+      color: var(--dark-bg);
+      box-shadow: 0 0 25px var(--neon-green);
+    }
+
+    @keyframes glitch {
+      0% { transform: translate(0); }
+      20% { transform: translate(-3px, 3px); }
+      40% { transform: translate(-3px, -3px); }
+      60% { transform: translate(3px, 3px); }
+      80% { transform: translate(3px, -3px); }
+      100% { transform: translate(0); }
+    }
+
+    /* Loading Message */
+    #loadingMessage {
+      text-align: center;
+      font-size: 1.2em;
+      color: var(--neon-blue);
+      text-shadow: var(--glow);
+      animation: neonFlicker 2s infinite alternate;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="cyber-grid"></div>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1>CYBERCONTROL COMMAND CENTER</h1>
-            <div class="mac-connection">
-                <div class="connection-status" id="connectionIndicator"></div>
-                <input type="text" id="macAddress" class="mac-input" placeholder="MAC Address: XX:XX:XX:XX:XX:XX">
-                <button class="button" onclick="connectDevice()">CONNECT</button>
-            </div>
-        </header>
+  <div class="container">
+    <h1>מערכת ניהול מכשירים</h1>
+    <div class="devices-grid" id="devicesGrid"></div>
+    <div id="loadingMessage">טוען מכשירים...</div>
+  </div>
 
-        <!-- Left Panel -->
-        <div class="side-panel">
-            <h2>System Controls</h2>
-            <button class="button" onclick="sendCommand('start')">Initialize System</button>
-            <button class="button stop" onclick="sendCommand('stop')">Emergency Stop</button>
-            
-            <h3>Data Routing</h3>
-            <select id="routingSelect" onchange="setRouting(this.value)">
-                <option value="file">Encrypted Storage</option>
-                <option value="server">Secure Transmission</option>
-            </select>
-
-            <h3>Runtime Config</h3>
-            <input type="number" id="minutesInput" placeholder="Duration (minutes)">
-            <button class="button" onclick="setDuration()">Set Runtime</button>
+  <!-- Modal for device settings -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeModal()">×</span>
+      <h2>הגדרות מכשיר</h2>
+      <div class="settings-group">
+        <label>שם מכשיר:</label>
+        <input type="text" id="deviceName">
+      </div>
+      <div class="settings-group">
+        <label>מקום אחסון:</label>
+        <select id="storageLocation">
+          <option value="server">שרת</option>
+          <option value="file">קובץ JSON מקומי</option>
+        </select>
+      </div>
+      <div class="settings-group">
+        <label>תדירות שמירה (בדקות):</label>
+        <input type="number" id="saveFrequency" min="1" value="5">
+      </div>
+      <div class="settings-group">
+        <label>הגבלת זמן:</label>
+        <input type="checkbox" id="enableTimeLimit" onchange="toggleTimeInputs()">
+        <div id="timeInputs" style="display: none;">
+          <input type="number" id="days" placeholder="ימים" min="0">
+          <input type="number" id="hours" placeholder="שעות" min="0" max="23">
+          <input type="number" id="minutes" placeholder="דקות" min="0" max="59">
         </div>
-
-        <!-- Main Panel -->
-        <div class="main-panel">
-            <h2>System Status</h2>
-            <div class="status-display" id="status">
-                System Ready...
-            </div>
-            
-            <h2>Operation Metrics</h2>
-            <div class="metrics-grid">
-                <div class="metric-box">
-                    <div>CPU Load</div>
-                    <div class="metric-value" id="cpuLoad">0%</div>
-                </div>
-                <div class="metric-box">
-                    <div>Memory Usage</div>
-                    <div class="metric-value" id="memoryUsage">0%</div>
-                </div>
-                <div class="metric-box">
-                    <div>Network Speed</div>
-                    <div class="metric-value" id="networkSpeed">0 MB/s</div>
-                </div>
-                <div class="metric-box">
-                    <div>Active Processes</div>
-                    <div class="metric-value" id="processes">0</div>
-                </div>
-            </div>
-
-            <h2>System Logs</h2>
-            <div class="log-container" id="logContainer"></div>
-        </div>
-
-        <!-- Right Panel -->
-        <div class="side-panel">
-            <h2>Network Status</h2>
-            <div class="status-display">
-                <div>Connected Devices: <span id="deviceCount">0</span></div>
-                <div>Protocol: <span id="protocol">TCP/IP</span></div>
-                <div>Encryption: <span id="encryption">AES-256</span></div>
-            </div>
-
-            <h2>Active Alerts</h2>
-            <div class="log-container" id="alertContainer"></div>
-        </div>
+      </div>
+      <button class="button" onclick="saveSettings()">שמור הגדרות</button>
     </div>
+  </div>
 
-    <script>
-        const SERVER_URL = "https://server.onrender.com";
-        let connectedDevice = null;
+  <div class="lock-screen" id="lockScreen">
+    <div class="lock-content">
+      <div class="lock-icon">🔒</div>
+      <div class="unlock-form">
+        <h2>מערכת נעולה</h2>
+        <input type="password" class="password-input" id="unlockPassword" placeholder="הזן סיסמה">
+        <button class="unlock-button" onclick="attemptUnlock()">שחרר נעילה</button>
+      </div>
+    </div>
+  </div>
 
-        // Initialize system
-        document.addEventListener("DOMContentLoaded", async function() {
-            try {
-                const response = await fetch(`${SERVER_URL}/ping`);
-                const data = await response.text();
-                addToLog("System initialized. Server connection established.");
-                simulateMetrics(); // Start simulating metrics for demo
-            } catch (error) {
-                addToLog("WARNING: Server connection failed!");
-            }
+  <script>
+    // מסך נעילה:
+    let lockTimeout;
+    const LOCK_DELAY = 300000; // 5 דקות
+    const SYSTEM_PASSWORD = '1234';
+
+    function initLockScreen() {
+      document.addEventListener('mousemove', resetLockTimer);
+      document.addEventListener('keypress', resetLockTimer);
+      document.addEventListener('click', resetLockTimer);
+      resetLockTimer();
+    }
+
+    function resetLockTimer() {
+      clearTimeout(lockTimeout);
+      lockTimeout = setTimeout(lockScreen, LOCK_DELAY);
+    }
+
+    function lockScreen() {
+      document.getElementById('lockScreen').classList.add('active');
+    }
+
+    function attemptUnlock() {
+      const password = document.getElementById('unlockPassword').value;
+      if (password === SYSTEM_PASSWORD) {
+        document.getElementById('lockScreen').classList.remove('active');
+        document.getElementById('unlockPassword').value = '';
+        resetLockTimer();
+      } else {
+        const lockScreen = document.getElementById('lockScreen');
+        lockScreen.style.animation = 'none';
+        lockScreen.offsetHeight;
+        lockScreen.style.animation = 'glitch 0.3s linear';
+      }
+    }
+
+    document.getElementById('unlockPassword').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        attemptUnlock();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', initLockScreen);
+
+    // ניהול מכשירים:
+    let devices = [];
+    const SERVER_URL = 'https://your-server.com'; // עדכן לכתובת השרת שלך
+
+    const mockDevices = [
+      {
+        macAddress: "00:11:22:33:44:55",
+        name: "מחשב נייד של דני",
+        connected: true,
+        timeLimit: 180,
+        storageLocation: "server",
+        lastSeen: "2024-02-23 10:30"
+      },
+      {
+        macAddress: "66:77:88:99:AA:BB",
+        name: "טאבלט משפחתי",
+        connected: false,
+        timeLimit: null,
+        storageLocation: "file",
+        lastSeen: "2024-02-22 15:45"
+      }
+    ];
+
+    let currentMac = null;
+
+    async function fetchDevices() {
+      document.getElementById('loadingMessage').style.display = 'block';
+      try {
+        const response = await fetch(`${SERVER_URL}/devices`);
+        if (!response.ok) {
+          throw new Error(`Error fetching devices: ${response.status}`);
+        }
+        const data = await response.json();
+        if (!data || data.length === 0) {
+          throw new Error("No devices found in the response");
+        }
+        devices = data;
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+        devices = mockDevices;
+      }
+      renderDevices();
+      document.getElementById('loadingMessage').style.display = 'none';
+    }
+
+    function renderDevices() {
+      const grid = document.getElementById('devicesGrid');
+      let htmlStr = '';
+      for (let i = 0; i < devices.length; i++) {
+        const device = devices[i];
+        htmlStr += `
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">${device.name || device.macAddress}</span>
+              <span class="status-indicator ${device.connected ? 'status-connected' : 'status-disconnected'}"></span>
+            </div>
+            <div class="device-info">
+              <div>MAC: ${device.macAddress}</div>
+              <div>סטטוס: ${device.connected ? 'מחובר' : 'מנותק'}</div>
+              ${device.timeLimit ? `<div>זמן נותר: ${formatTimeRemaining(device.timeLimit)}</div>` : ''}
+              <div>אחסון: ${device.storageLocation || ''}</div>
+              <div>נראה לאחרונה: ${device.lastSeen || ''}</div>
+            </div>
+            <button class="button" onclick="openSettings('${device.macAddress}')">הגדרות</button>
+            <a class="button" href="eavesdropping.html?mac=${device.macAddress}">צפה בהאזנות</a>
+          </div>
+        `;
+      }
+      grid.innerHTML = htmlStr;
+    }
+
+    function formatTimeRemaining(timeLimit) {
+      const days = Math.floor(timeLimit / (24 * 60));
+      const hours = Math.floor((timeLimit % (24 * 60)) / 60);
+      const minutes = timeLimit % 60;
+      return `${days}d ${hours}h ${minutes}m`;
+    }
+
+    function openSettings(macAddress) {
+      currentMac = macAddress;
+
+      const device = devices.find(d => d.macAddress === macAddress);
+      if (!device) return;
+
+      document.getElementById('deviceName').value = device.name || '';
+      document.getElementById('storageLocation').value = device.storageLocation || 'server';
+      document.getElementById('saveFrequency').value = 5;
+
+      document.getElementById('enableTimeLimit').checked = !!device.timeLimit;
+      toggleTimeInputs();
+
+      if (device.timeLimit) {
+        const days = Math.floor(device.timeLimit / (24 * 60));
+        const hours = Math.floor((timeLimit % (24 * 60)) / 60);
+        const minutes = timeLimit % 60;
+        document.getElementById('days').value = days;
+        document.getElementById('hours').value = hours;
+        document.getElementById('minutes').value = minutes;
+      } else {
+        document.getElementById('days').value = '';
+        document.getElementById('hours').value = '';
+        document.getElementById('minutes').value = '';
+      }
+
+      document.getElementById('settingsModal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('settingsModal').style.display = 'none';
+      currentMac = null;
+    }
+
+    function toggleTimeInputs() {
+      const timeInputs = document.getElementById("timeInputs");
+      if (document.getElementById("enableTimeLimit").checked) {
+        timeInputs.style.display = "block";
+      } else {
+        timeInputs.style.display = "none";
+      }
+    }
+
+    function getTimeLimitInMinutes() {
+      const days = parseInt(document.getElementById('days').value) || 0;
+      const hours = parseInt(document.getElementById('hours').value) || 0;
+      const minutes = parseInt(document.getElementById('minutes').value) || 0;
+      return (days * 24 * 60) + (hours * 60) + minutes;
+    }
+
+    async function saveSettings() {
+      if (!currentMac) {
+        closeModal();
+        return;
+      }
+      const updatedDevice = {
+        macAddress: currentMac,
+        name: document.getElementById('deviceName').value,
+        timeLimit: document.getElementById('enableTimeLimit').checked ? getTimeLimitInMinutes() : null,
+        storageLocation: document.getElementById('storageLocation').value,
+        saveFrequency: parseInt(document.getElementById('saveFrequency').value) || 5
+      };
+
+      try {
+        const response = await fetch(`${SERVER_URL}/devices`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updatedDevice)
         });
-
-        function validateMacAddress(mac) {
-            const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
-            return macRegex.test(mac);
+        if (!response.ok) {
+          throw new Error(`שגיאה בעדכון המכשיר: ${response.status}`);
         }
+        alert('ההגדרות עודכנו בהצלחה!');
+      } catch (err) {
+        console.error(err);
+        alert('לא הצלחנו לעדכן את המכשיר בשרת.');
+      }
 
-        async function connectDevice() {
-            const macInput = document.getElementById('macAddress');
-            const mac = macInput.value;
-            
-            if (!validateMacAddress(mac)) {
-                showStatus("Invalid MAC address format!");
-                addToLog("Connection failed: Invalid MAC format");
-                return;
-            }
+      closeModal();
+      fetchDevices();
+    }
 
-            try {
-                const response = await fetch(`${SERVER_URL}/connect_device`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mac_address: mac })
-                });
-
-                if (response.ok) {
-                    connectedDevice = mac;
-                    document.getElementById('connectionIndicator').classList.add('connected');
-                    showStatus("Device connected successfully");
-                    addToLog(`Device ${mac} connected to control system`);
-                    document.getElementById('deviceCount').textContent = '1';
-                } else {
-                    throw new Error("Connection failed");
-                }
-            } catch (error) {
-                showStatus("Connection failed: " + error.message);
-                addToLog(`Connection attempt failed for device ${mac}`);
-            }
-        }
-
-        async function sendCommand(action) {
-            if (!connectedDevice) {
-                showStatus("No device connected!");
-                addToLog("Command failed: No active device connection");
-                return;
-            }
-
-            try {
-                await fetch(`${SERVER_URL}/send_command`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: action,
-                        device_mac: connectedDevice
-                    })
-                });
-                showStatus(`Command "${action}" executed successfully`);
-                addToLog(`Command executed: ${action}`);
-            } catch (error) {
-                showStatus(`Error: ${error.message}`);
-                addToLog(`Command failed: ${error.message}`);
-            }
-        }
-
-        function showStatus(message) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.textContent = message;
-        }
-
-        function addToLog(message) {
-            const logContainer = document.getElementById('logContainer');
-            const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
-            const timestamp = new Date().toLocaleTimeString();
-            logEntry.textContent = `[${timestamp}] ${message}`;
-            logContainer.appendChild(logEntry);
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
-
-        // Simulate changing metrics for demo purposes
-        function simulateMetrics() {
-            setInterval(() => {
-                document.getElementById('cpuLoad').textContent = 
-                    Math.floor(Math.random() * 100) + '%';
-                document.getElementById('memoryUsage').textContent = 
-                    Math.floor(Math.random() * 100) + '%';
-                document.getElementById('networkSpeed').textContent = 
-                    (Math.random() * 10).toFixe
+    document.addEventListener('DOMContentLoaded', fetchDevices);
+    setInterval(fetchDevices, 30000);
+  </script>
+</body>
+</html>
