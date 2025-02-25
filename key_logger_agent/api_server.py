@@ -63,7 +63,7 @@ class StatusChecker(APIServer):
 
         :return: תגובת השרת (requests.Response).
         """
-        url = "https://key-logger-server.onrender.com/check_status_changes"  # החלף בכתובת ה-URL האמיתית
+        url = "https://key-logger-server.onrender.com/api/status/chec"  # החלף בכתובת ה-URL האמיתית
         try:
             response = requests.get(url)
             response.raise_for_status()
@@ -83,7 +83,7 @@ class RequestManager:
         self.data_file_writer = DataFileWriter()
         self.status_checker = StatusChecker()
 
-    def handle_request(self, method, request_type, kwargs):
+    def handle_request(self, method, request_type, kwargs = None):
         """
         מטפל בבקשה ומנתב אותה למחלקה המתאימה.
 
@@ -102,9 +102,8 @@ class RequestManager:
                 raise ValueError(f"סוג בקשה לא חוקי עבור POST: {request_type}")
         elif method.upper() == 'GET':
             if request_type == 'status':
-                return self.status_checker.interact_with_server(kwargs)
-            elif request_type == 'dag':
-                return self.dag_file_fetcher.interact_with_server(kwargs)
+                return self.status_checker.interact_with_server()
+
             else:
                 raise ValueError(f"סוג בקשה לא חוקי עבור GET: {request_type}")
         else:
