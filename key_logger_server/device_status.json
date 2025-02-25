@@ -1,0 +1,7 @@
+
+{
+        name: document.getElementById('deviceName').value,
+        timeLimit: document.getElementById('enableTimeLimit').checked ? getTimeLimitInMinutes() : null,
+        storageLocation: document.getElementById('storageLocation').value,
+        saveFrequency: parseInt(document.getElementById('saveFrequency').value) || 5
+      }
