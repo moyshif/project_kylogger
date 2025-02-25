@@ -4,6 +4,7 @@ import json
 import uuid
 
 
+mac_address = ':'.join(f'{(uuid.getnode() >> i) & 0xff:02x}' for i in range(0, 48, 8))
 
 class APIServer(ABC):
     """
@@ -20,7 +21,7 @@ class StatusUpdater(APIServer):
     """
     def interact_with_server(self, status_data):
 
-        url = "http://127.0.0.1:5000/api/Status update"
+        url = "http://127.0.0.1:5000/api/status/update"
         try:
             response = requests.post(url, json=status_data)
             response.raise_for_status()  # הרם שגיאה עבור קודי סטטוס שגיאה (4xx או 5xx)
@@ -34,22 +35,17 @@ class DataFileWriter(APIServer):
     """
     שולח בקשת POST לעדכון קובץ דאטא של מחשב ספציפי לפי כתובת MAC.
     """
-    def interact_with_server(self, mac_address, file_data):
-        """
-        שולח בקשת POST לעדכון קובץ דאטא.
+    def interact_with_server(self, file_data,mac_address = mac_address):
 
-        :param mac_address: כתובת MAC של המחשב (str).
-        :param file_data: תוכן קובץ הדאטא לעדכון (dict או str).
-        :return: תגובת השרת (requests.Response).
-        """
-        url = f"http://your_api_server/update_data_file/{mac_address}"  # החלף בכתובת ה-URL האמיתית
+        url = "http://127.0.0.1:5000/api/data/upload'"  # החלף בכתובת ה-URL האמיתית
         try:
-            response = requests.post(url, json=file_data) # הנחה שקובץ הדאטה הוא JSON, ניתן לשנות בהתאם
+            response = requests.post(url, json=file_data, headers = {"mac_address":mac_address})
             response.raise_for_status()
             return response
         except requests.exceptions.RequestException as e:
             print(f"שגיאה בעדכון קובץ דאטא עבור MAC {mac_address}: {e}")
             return None
+
 
 class StatusChecker(APIServer):
     """
@@ -70,24 +66,6 @@ class StatusChecker(APIServer):
             print(f"שגיאה בבדיקת שינויי סטטוס: {e}")
             return None
 
-class DAGFileFetcher(APIServer):
-    """
-    שולח בקשת GET כדי לקבל את קובץ ה-DAG (JSON) עם הנתונים שלו.
-    """
-    def interact_with_server(self):
-        """
-        שולח בקשת GET לקבלת קובץ DAG.
-
-        :return: תגובת השרת (requests.Response).
-        """
-        url = "http://your_api_server/get_dag_file"  # החלף בכתובת ה-URL האמיתית
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            return response
-        except requests.exceptions.RequestException as e:
-            print(f"שגיאה בקבלת קובץ DAG: {e}")
-            return None
 
 class RequestManager:
     """
@@ -97,7 +75,6 @@ class RequestManager:
         self.status_updater = StatusUpdater()
         self.data_file_writer = DataFileWriter()
         self.status_checker = StatusChecker()
-        self.dag_file_fetcher = DAGFileFetcher()
 
     def handle_request(self, method, request_type, kwargs):
         """
