@@ -690,20 +690,24 @@
         }
         const data = await response.json();
         console.log('Raw data:', data);
-        if (!data || (Array.isArray(data) && data.length === 0) || (typeof data === 'object' && Object.keys(data).length === 0)) {
+        if (!data || data.length === 0) {
           throw new Error("No devices found in the response");
         }
-        // ננרמל את הנתונים למערך אחיד
-        devices = normalizeDevicesData(data);
+        devices = data.map(device => ({
+          macAddress: device.mac_address,  // שנה ל-mac_address קטן לפי השרת
+          name: device.name || '',
+          connected: device.connected || false,
+          timeLimit: device.timeLimit || null,
+          storageLocation: device.storageLocation || 'server',
+          lastSeen: device.lastSeen || ''
+        }));
       } catch (error) {
         console.error('Error fetching devices:', error);
-        // במקרה של שגיאה, נשתמש ב־mockDevices כדוגמה
-        devices = mockDevices;
+        devices = mockDevices;  // נתוני דוגמה במקרה של שגיאה
       }
       renderDevices();
       document.getElementById('loadingMessage').style.display = 'none';
     }
-
     // שלב 2: הצגת המכשירים על המסך
     function renderDevices() {
       const grid = document.getElementById('devicesGrid');
@@ -800,86 +804,39 @@
 
     // שלב 4: שמירת הגדרות
     async function saveSettings() {
-      // אם לא בחרנו מכשיר כלשהו, פשוט נסגור
       if (!currentMac) {
         closeModal();
         return;
       }
-      changedData["Mac-Address"] = currentMac;
 
-      // נמצא את המכשיר הקיים כדי להשוות
       let device = devices.find(d => d.macAddress === currentMac);
       if (!device) {
         closeModal();
         return;
       }
 
-      // נקרא את הערכים החדשים מתוך הטופס
       let newName = document.getElementById('deviceName').value;
       let newTimeLimit = document.getElementById('enableTimeLimit').checked ? getTimeLimitInMinutes() : null;
       let newStorageLocation = document.getElementById('storageLocation').value;
       let newSaveFrequency = parseInt(document.getElementById('saveFrequency').value) || 5;
 
-      // נייצר אובייקט לצבירת השינויים בלבד
-      let changedData = {
-        name: "",
-        timeLimit: "",
-        storageLocation: "",
-        saveFrequency: ""
+      let updatedDevice = {
+        mac_address: currentMac,  // תואם לשרת
+        name: newName,
+        timeLimit: newTimeLimit,
+        storageLocation: newStorageLocation,
+        saveFrequency: newSaveFrequency,
+        connected: device.connected,  // שמור את הסטטוס הקיים
+        lastSeen: device.lastSeen || new Date().toISOString().slice(0, 16).replace('T', ' ')
       };
 
-      // נשמור את ערכי המכשיר הקיים לצורך השוואה
-      let oldName = device.name || "";
-      let oldTimeLimit = device.timeLimit || null;
-      let oldStorageLocation = device.storageLocation || "";
-      let oldSaveFrequency = device.saveFrequency || 5;
-      // (אם לא הגדרנו קודם saveFrequency במכשיר, נניח 5 כערך בסיסי)
-
-      // נשתמש במערך שדות כדי לבצע השוואה ב־for
-      let fields = ["name", "timeLimit", "storageLocation", "saveFrequency"];
-      for (let i = 0; i < fields.length; i++) {
-        let field = fields[i];
-        // נבדוק באיזה שדה מדובר, נשווה בין הישן לחדש
-        if (field === "name" && newName !== oldName) {
-          changedData.name = newName;
-        }
-        else if (field === "timeLimit" && newTimeLimit !== oldTimeLimit) {
-          changedData.timeLimit = newTimeLimit;
-        }
-        else if (field === "storageLocation" && newStorageLocation !== oldStorageLocation) {
-          changedData.storageLocation = newStorageLocation;
-        }
-        else if (field === "saveFrequency" && newSaveFrequency !== oldSaveFrequency) {
-          changedData.saveFrequency = newSaveFrequency;
-        }
-      }
-
-      // נבדוק האם בוצע שינוי כלשהו
-      let noChanges = true;
-      for (let i = 0; i < fields.length; i++) {
-        let field = fields[i];
-        // אם יש ערך שאינו ריק (או null במקרה של timeLimit)
-        if (changedData[field] !== "" && changedData[field] !== null) {
-          noChanges = false;
-          break;
-        }
-      }
-
-      // אם לא שונה כלום, נצא
-      if (noChanges) {
-        alert('לא שונה כלום');
-        closeModal();
-        return;
-      }
-      // שלב 5: שליחת השינויים בלבד לשרת
       try {
         const response = await fetch(`${SERVER_URL}/api/status/change`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          // שולחים רק את הערכים ששונו, והשאר ריקים – כך מבליטים מה נשמר
-          body: JSON.stringify(changedData)
+          body: JSON.stringify(updatedDevice)
         });
 
         if (!response.ok) {
@@ -894,9 +851,7 @@
 
       closeModal();
       fetchDevices();
-    }
-
-    // שלב 6: ברגע שהדף נטען, מביאים את רשימת המכשירים. 
+    }// שלב 6: ברגע שהדף נטען, מביאים את רשימת המכשירים. 
     // בנוסף, נרענן את הרשימה כל 30 שניות (סתם בתור דוגמה).
     document.addEventListener('DOMContentLoaded', fetchDevices);
     setInterval(fetchDevices, 30000);

