@@ -116,33 +116,3 @@ class RequestManager:
                 raise ValueError(f"סוג בקשה לא חוקי עבור GET: {request_type}")
         else:
             raise ValueError(f"שיטת בקשה לא חוקית: {method}")
-
-# # --- דוגמת שימוש ---
-# if __name__ == "__main__":
-#     request_manager = RequestManager()
-#
-#     # עדכון סטטוס
-#     status_data = {"project_id": "123", "status": "running"}
-#     status_response = request_manager.handle_request('POST', 'status', status_data=status_data)
-#     if status_response:
-#         print("עדכון סטטוס הצליח:", status_response.status_code)
-#         print("תוכן התגובה:", status_response.json() if 'application/json' in status_response.headers.get('Content-Type', '') else status_response.text)
-#
-#     # עדכון קובץ דאטא
-#     file_data = {"data_point_1": 10, "data_point_2": 20}
-#     data_response = request_manager.handle_request('POST', 'data', mac_address="00:1A:2B:3C:4D:5E", file_data=file_data)
-#     if data_response:
-#         print("עדכון קובץ דאטא הצליח:", data_response.status_code)
-#         print("תוכן התגובה:", data_response.json() if 'application/json' in data_response.headers.get('Content-Type', '') else data_response.text)
-#
-#     # בדיקת שינויי סטטוס
-#     check_status_response = request_manager.handle_request('GET', 'status')
-#     if check_status_response:
-#         print("בדיקת שינויי סטטוס הצליחה:", check_status_response.status_code)
-#         print("תוכן התגובה:", check_status_response.json() if 'application/json' in check_status_response.headers.get('Content-Type', '') else check_status_response.text)
-#
-#     # קבלת קובץ DAG
-#     dag_file_response = request_manager.handle_request('GET', 'dag')
-#     if dag_file_response:
-#         print("קבלת קובץ DAG הצליחה:", dag_file_response.status_code)
-#         print("תוכן קובץ DAG:", dag_file_response.json() if 'application/json' in dag_file_response.headers.get('Content-Type', '') else dag_file_response.text)
