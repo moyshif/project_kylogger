@@ -28,22 +28,4 @@ class Encryption:
 
         return processed_dict
 
-c = {
-    "24/02/2025 12:03": [
-        {
-            "  פלל׭%בעהףלט": "ks^vudf`X"
-        }
-    ],
-    "24/02/2025 12:07": [
-        {
-            "  פלל׭%בעהףלט": "כב^vudf`Xעא׭ב^vudf`Xכב^vudf`Xץ׬כק"
-        },
-        {
-            " Bjjbi`%DL%Vqpalj%(%U|qmjk%DUL%Lkq`wdfqljkv%y%Bjjbi`%DL%Vqpalj ": "כבכב^vudf`Xץ"
-        }
-    ]
-}
 
-if __name__ == "__main__":
-    a = Encryption(5)
-    print(a.xor_encrypt_decrypt_dict_list(c))
