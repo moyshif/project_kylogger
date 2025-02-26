@@ -50,6 +50,54 @@ def write_to_device_status(data):
         print("❌ שגיאה בכתיבת device_status.json:", e)
 
 
+def write_to_device_data(data):
+    # בדיקה שהמילון מכיל את המפתח הנכון
+    Mac_address = next(iter(data.values()))
+    if not Mac_address:
+        print("❌ לא נשלח mac_address לעדכון קובץ")
+        return
+    file_path = f"{Mac_address}.json"
+    try:
+        # ניסיון לקרוא את הקובץ אם הוא קיים
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                data_json = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            data_json = []  # אם אין קובץ או שהוא ריק, ניצור רשימה חדשה
+        # הוספת הנתון החדש
+        if isinstance(data_json, list):
+            data_json.append(data)
+        else:
+            data_json = [data_json, data]  # הופכים למערך אם זה מילון
+        # כתיבה חזרה לקובץ
+        with open(file_path, "w", encoding="utf-8") as file:
+            json.dump(data_json, file, indent=4)
+        print(f"✅ הנתונים נוספו בהצלחה לקובץ {file_path}")
+    except Exception as e:
+        print("❌ שגיאה בכתיבת המידע:", e)
+
+
+@app.route('/api/data/files', methods=['GET'])
+def get_device_logs():
+    print("📡 התחלת טיפול בבקשת האזנות עבור מכשיר")
+    mac_address = request.headers.get("mac-address")
+    if not mac_address:
+        return jsonify({"error": "Missing mac_address in headers"}), 400
+    try:
+
+        file_path = f"{mac_address}.json"  # שנה לפי הצורך
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as file:
+                all_logs = json.load(file)
+                device_logs = all_logs.get(mac_address, {})
+                print(f"✅ לוגים שנשלחו עבור {mac_address}:", device_logs)
+                return jsonify(device_logs)
+        return jsonify({}), 200  # אם אין לוגים, מחזיר ריק
+    except Exception as e:
+        print(f"❌ שגיאה בשליפת לוגים עבור {mac_address}:", e)
+        return jsonify({"error": str(e)}), 500
+
+
 def write_to_change_status(data):
     try:
         file_path = "change_device_status.json"
@@ -89,11 +137,11 @@ def status_update():
 @app.route('/api/data/upload', methods=['POST'])
 def upload_data():
     print("📡 התחלת טיפול בבקשת העלאת נתוני מחשב מהאתר")
+    data = {request.headers.get("mac-address"): request.get_json()}
     try:
-        data = request.get_json()
-        if not data or "mac_address" not in data:
+        if not data:
             return jsonify({"error": "Invalid JSON or missing mac_address"}), 400
-        write_to_device_status(data)
+        write_to_device_data(data)
         print("✅ נתוני מחשב מהאתר התקבלו:", data)
         return jsonify({"message": "Success"}), 200
     except Exception as e:
@@ -153,6 +201,19 @@ def change_status():
         data = request.get_json()
         if not data or "mac_address" not in data:
             return jsonify({"error": "Invalid JSON or missing mac_address"}), 400
+
+        mac_address = data["mac_address"]
+
+        # עדכן את השם ישירות ב-device_status.json
+        if "name" in data:
+            name_update = {"mac_address": mac_address, "name": data["name"]}
+            write_to_device_status(name_update)
+
+        # הכן נתונים עבור change_device_status.json (בלי השם)
+        change_data = {k: v for k, v in data.items() if k != "name"}
+        if change_data:  # שמור רק אם יש נתונים מעבר לשם
+            write_to_change_status(change_data)
+
         write_to_change_status(data)
         print("✅ נתוני סטטוס מהאתר התקבלו:", data)
         return jsonify({"message": "Success"}), 200

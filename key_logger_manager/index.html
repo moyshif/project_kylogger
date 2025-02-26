@@ -4,6 +4,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" />
+  <link rel="icon" type="image/png" href="/favicon/favicon.png" />
+  <link rel="shortcut icon" href="/favicon/favicon-96x96.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
   <title>Matrix Device Manager</title>
   <style>
     :root {
@@ -485,7 +490,7 @@
 <body>
   <canvas id="matrix-bg"></canvas>
   <div class="container">
-    <h1>מערכת ניהול מכשירים</h1>
+    <h1>מרכז שליטה ומעקב האזנות</h1>
     <div class="devices-grid" id="devicesGrid"></div>
     <div id="loadingMessage">טוען מכשירים...</div>
   </div>
@@ -730,7 +735,9 @@
           <div>נראה לאחרונה: ${device.lastSeen || ''}</div>
         </div>
         <button class="button" onclick="openSettings('${device.macAddress}')">הגדרות</button>
-        <a class="button" href="eavesdropping.html?mac=${device.macAddress}">צפה בהאזנות</a>
+        <button class="button" onclick="location.href='eavesdropping.html?mac=${device.macAddress}'">צפה בהאזנות</button>
+
+
       </div>
     `;
       }
