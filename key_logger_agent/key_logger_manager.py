@@ -50,6 +50,7 @@ class Manager:
 
     def server_status_update(self, connected):
         mac_address = ':'.join(f'{(uuid.getnode() >> i) & 0xff:02x}' for i in range(0, 48, 8))
+    
         status = {
             "macAddress": mac_address,
             "name": "מחשב נייד של דני",
