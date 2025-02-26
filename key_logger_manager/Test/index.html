@@ -1,36 +1,26 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" />
     <link rel="icon" type="image/png" href="/favicon/favicon.png" />
     <link rel="shortcut icon" href="/favicon/favicon-96x96.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <!-- הוספת גופן מותאם -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <title>Matrix Device Manager</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
     <canvas id="matrix-bg"></canvas>
     <div class="container" id="mainContainer">
-        <h1 id="pageTitle">מרכז בקרה ושליטה להאזנות - KEY LOGGER</h1>
+        <h1 id="pageTitle">מרכז שליטה ומעקב האזנות</h1>
         <div class="devices-grid" id="devicesGrid"></div>
-        <div id="loadingMessage">
-            <div class="loading-spinner"></div>
-            <div>טוען מכשירים...</div>
-        </div>
+        <div id="loadingMessage">טוען מכשירים...</div>
 
         <!-- אזור ייבוא האזנות -->
         <div id="eavesdroppingSection" style="display: none;">
-            <a class="button back-button" href="#" onclick="switchToDevices()">
-                <span class="icon">→</span> חזרה לרשימת מכשירים
-            </a>
+            <a class="button" href="#" onclick="switchToDevices()">חזרה לרשימת מכשירים</a>
             <div class="filter-section">
                 <div>
                     <label for="filterDate">תאריך:</label>
@@ -46,9 +36,7 @@
                         <option value="">הצג הכל</option>
                     </select>
                 </div>
-                <button class="button filter-button" onclick="applyFilters()">
-                    <span class="icon">⚙️</span> סינון
-                </button>
+                <button class="button" onclick="applyFilters()">סינון</button>
             </div>
             <div id="logContainer"></div>
         </div>
@@ -61,7 +49,7 @@
             <h2>הגדרות מכשיר</h2>
             <div class="settings-group">
                 <label>שם מכשיר:</label>
-                <input type="text" id="deviceName" placeholder="הזן שם למכשיר">
+                <input type="text" id="deviceName">
             </div>
             <div class="settings-group">
                 <label>מקום אחסון:</label>
@@ -76,28 +64,25 @@
             </div>
             <div class="settings-group">
                 <label>הגבלת זמן:</label>
-                <div class="toggle-wrapper">
-                    <input type="checkbox" id="enableTimeLimit" onchange="toggleTimeInputs()">
-                    <label for="enableTimeLimit" class="toggle-label"></label>
-                </div>
+                <input type="checkbox" id="enableTimeLimit" onchange="toggleTimeInputs()">
                 <div id="timeInputs" style="display: none;">
                     <input type="number" id="days" placeholder="ימים" min="0">
                     <input type="number" id="hours" placeholder="שעות" min="0" max="23">
                     <input type="number" id="minutes" placeholder="דקות" min="0" max="59">
                 </div>
             </div>
-            <button class="button save-button" onclick="saveSettings()">שמור הגדרות</button>
+            <button class="button" onclick="saveSettings()">שמור הגדרות</button>
         </div>
     </div>
 
-    <!-- מסך נעילה משופר -->
+    <!-- מסך נעילה -->
     <div class="lock-screen" id="lockScreen">
         <div class="cyber-lines"></div>
         <div class="lock-content">
             <div class="lock-icon">🔒</div>
             <div class="unlock-form">
-                <h2>מערכת מאובטחת</h2>
-                <input type="password" class="password-input" id="unlockPassword" placeholder="הזן סיסמה לשחרור">
+                <h2>מערכת נעולה</h2>
+                <input type="password" class="password-input" id="unlockPassword" placeholder="הזן סיסמה">
                 <button class="unlock-button" onclick="attemptUnlock()">שחרר נעילה</button>
             </div>
         </div>
@@ -105,5 +90,4 @@
 
     <script src="scripts.js"></script>
 </body>
-
 </html>

