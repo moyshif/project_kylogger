@@ -550,3 +550,15 @@ select {
     display: flex;
     justify-content: space-between;
 }
+
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.back-button, .sort-button {
+  margin: 0 10px;
+}

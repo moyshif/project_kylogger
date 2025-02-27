@@ -339,6 +339,8 @@ function populateWindowList(logArray) {
     });
 }
 
+let isSortDescending = true;
+
 function displayLogs(arrayToDisplay) {
     const container = document.getElementById('logContainer');
     container.innerHTML = '';
@@ -352,7 +354,14 @@ function displayLogs(arrayToDisplay) {
         return;
     }
     
-    arrayToDisplay.forEach(entry => {
+    // Sort the array based on timestamp
+    const sortedArray = [...arrayToDisplay].sort((a, b) => {
+        const dateA = new Date(`${a.date} ${a.time}`);
+        const dateB = new Date(`${b.date} ${b.time}`);
+        return isSortDescending ? dateB - dateA : dateA - dateB;
+    });
+    
+    sortedArray.forEach(entry => {
         const tsDiv = document.createElement('div');
         tsDiv.className = 'log-entry';
         
@@ -373,6 +382,14 @@ function displayLogs(arrayToDisplay) {
         container.appendChild(tsDiv);
     });
 }
+
+function toggleSortOrder() {
+    isSortDescending = !isSortDescending;
+    const sortText = document.getElementById('sortText');
+    sortText.textContent = isSortDescending ? 'מאוחר למעלה' : 'מוקדם למעלה';
+    applyFilters(); // Re-apply filters with new sort order
+}
+
 
 function applyFilters() {
     const filterDate = document.getElementById('filterDate').value;
@@ -412,5 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('unlockPassword').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') attemptUnlock();
     });
+    document.getElementById('sortText').textContent = 'מיון מלמעלה למטה';
 });
 // https://key-logger-server.onrender.com/api/files/list

@@ -28,9 +28,14 @@
 
         <!-- אזור ייבוא האזנות -->
         <div id="eavesdroppingSection" style="display: none;">
-            <a class="button back-button" href="#" onclick="switchToDevices()">
-                <span class="icon">→</span> חזרה לרשימת מכשירים
-            </a>
+            <div class="header-actions">
+                <a class="button back-button" href="#" onclick="switchToDevices()">
+                    <span class="icon">→ &nbsp;</span> חזרה לרשימת מכשירים
+                </a>
+                <button class="button sort-button" id="sortButton" onclick="toggleSortOrder()">
+                    <span id="sortText">מאוחר למעלה</span> <span class="icon">&nbsp;↕️</span>
+                </button>
+            </div>
             <div class="filter-section">
                 <div>
                     <label for="filterDate">תאריך:</label>
