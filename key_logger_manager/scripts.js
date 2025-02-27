@@ -85,13 +85,14 @@ async function fetchDevices() {
         const data = await response.json();
         if (!data || data.length === 0) throw new Error("No devices found");
         devices = data.map(device => ({
-            macAddress: device.mac_address,
+            macAddress: device.mac_address.toLowerCase(), // נרמול לכל אותיות קטנות
             name: device.name || '',
             connected: device.connected || false,
             timeLimit: device.timeLimit || null,
             storageLocation: device.storageLocation || 'server',
             lastSeen: device.lastSeen || ''
         }));
+        console.log("מכשירים שהתקבלו:", devices); // הדפס לבדיקה
     } catch (error) {
         console.error(error);
         devices = mockDevices;
@@ -233,10 +234,12 @@ async function saveSettings() {
 // Eavesdropping Section
 async function fetchLogs(mac) {
     const url = `${SERVER_URL}/api/data/files`;
+    const formattedMac = mac   //.replaceAll(':', '_'); // ודא שהפורמט תואם
+    console.log("שולח בקשה עם MAC:", formattedMac); // הדפס את ה-MAC לפני שליחה
     try {
         const response = await fetch(url, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json', 'mac-address': mac.replaceAll(':', '_') }
+            headers: { 'Content-Type': 'application/json', 'mac-address': formattedMac }
         });
         if (!response.ok) throw new Error('שגיאה בטעינת ההאזנות');
         const logs = await response.json();
