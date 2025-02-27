@@ -379,7 +379,7 @@ function displayLogs(arrayToDisplay) {
             const windowDiv = document.createElement('div');
             windowDiv.className = 'log-item';
             windowDiv.innerHTML = `
-                <div class="window-name">${logItem.windowName}</div>
+                <div class="window-name" style="color: yellow;">${logItem.windowName}</div>
                 <div class="log-text">${logItem.text}</div>`;
             tsDiv.appendChild(windowDiv);
         });
